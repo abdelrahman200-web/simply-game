@@ -110,6 +110,71 @@
     background:linear-gradient(135deg,#ff3355,#ff8833); color:#fff; box-shadow:0 5px 25px rgba(255,51,85,0.5); transition:.2s;
   }
   #againBtn:hover { transform:scale(1.05); }
+
+  /* ============ نوافذ منبثقة: الإعدادات و المتجر ============ */
+  .modal-overlay {
+    position:fixed; inset:0; z-index:65; display:none; align-items:center; justify-content:center;
+    background:rgba(2,4,10,0.82); padding:16px; overflow-y:auto;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal-box {
+    background:linear-gradient(160deg,#0c1424,#070b14); border:1px solid rgba(255,255,255,0.12);
+    border-radius:18px; padding:22px; width:min(460px,94vw); max-height:88vh; overflow-y:auto;
+    box-shadow:0 15px 50px rgba(0,0,0,0.6); text-align:center;
+  }
+  .modal-box h2 { margin-bottom:14px; font-size:22px; text-shadow:0 0 15px rgba(255,255,255,0.25); }
+  .settings-section { margin-bottom:18px; text-align:right; }
+  .settings-label { color:#8ea7cb; font-size:14px; margin-bottom:8px; }
+  .option-row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .option-btn {
+    flex:1; min-width:64px; padding:10px 6px; border-radius:10px; border:2px solid #233759;
+    background:#0a1326; color:#cfe3ff; font-size:13px; font-weight:bold; cursor:pointer; transition:.2s;
+  }
+  .option-btn:hover { border-color:#4a7fd1; }
+  .option-btn.active { background:linear-gradient(135deg,#1e52f0,#00c6ff); border-color:#00c6ff; color:#fff; }
+
+  .car-grid { display:flex; flex-direction:column; gap:12px; margin:10px 0; }
+  .car-card {
+    display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.04);
+    border:2px solid rgba(255,255,255,0.12); border-radius:14px; padding:12px; text-align:right;
+    transition:.2s;
+  }
+  .car-card.selected { border-color:#ffd75e; box-shadow:0 0 18px rgba(255,215,94,0.35); background:rgba(255,215,94,0.06); }
+  .car-swatch { width:52px; height:52px; border-radius:12px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:26px; box-shadow:inset 0 0 10px rgba(0,0,0,0.4); }
+  .car-info { flex:1; min-width:0; }
+  .car-info .car-name { font-weight:bold; font-size:16px; direction:ltr; text-align:right; }
+  .car-info .car-ability { font-size:12.5px; color:#a2b9db; line-height:1.5; margin-top:2px; }
+  .car-info .car-price { font-size:12px; color:#7dd87d; font-weight:bold; margin-top:2px; }
+  .car-select-btn {
+    padding:8px 14px; border-radius:10px; border:none; font-weight:bold; font-size:13px; cursor:pointer;
+    background:linear-gradient(135deg,#1e52f0,#00c6ff); color:#fff; flex-shrink:0; transition:.2s;
+  }
+  .car-select-btn.chosen { background:linear-gradient(135deg,#00b09b,#96c93d); }
+
+  /* ============ زر القدرة الخاصة (يظهر أثناء اللعب حسب السيارة) ============ */
+  #specialContainer { position:fixed; bottom:115px; left:25px; z-index:35; display:none; pointer-events:auto; }
+  #specialBtn {
+    width:88px; height:88px; border-radius:50%; border:3px solid #d24dff;
+    background:radial-gradient(circle, #8e2de2 0%, #3a0066 100%); color:#fff;
+    font-size:14px; font-weight:900; cursor:pointer; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; box-shadow:0 0 25px rgba(142,45,226,0.6), inset 0 2px 5px rgba(255,255,255,0.4);
+    transition:.15s; user-select:none; touch-action:none;
+  }
+  #specialBtn:active:not(.cooldown) { transform:scale(0.92); filter:brightness(1.2); }
+  #specialBtn.cooldown { background:#222a38; border-color:#445566; color:#778899; box-shadow:none; cursor:not-allowed; opacity:0.75; }
+  #specialIcon { font-size:24px; line-height:1; }
+  #specialText { font-size:11px; margin-top:2px; font-weight:bold; }
+
+  #healthBox { min-width:170px; }
+  #healthBarWrap { width:80px; height:10px; background:#222a38; border-radius:6px; overflow:hidden; display:inline-block; vertical-align:middle; margin:0 6px; }
+  #healthBar { height:100%; width:100%; background:linear-gradient(90deg,#00ff88,#7dd87d); border-radius:6px; transition:width .2s, background .2s; }
+
+  #explosionFlash {
+    position:fixed; inset:0; z-index:40; display:none; pointer-events:none;
+    background:radial-gradient(circle, rgba(255,140,0,0.55) 0%, rgba(255,30,0,0.35) 45%, rgba(0,0,0,0) 75%);
+  }
+  #explosionFlash.show { display:block; animation:explosionPulse 0.5s ease-out; }
+  @keyframes explosionPulse { 0%{ opacity:1; } 100%{ opacity:0; } }
 </style>
 </head>
 <body>
@@ -129,9 +194,53 @@
     <p id="loginError"></p>
   </div>
 
+  <div id="preGameBtns" style="display:flex; gap:10px; width:min(380px,92vw);">
+    <button class="menu-btn" id="btnSettings" style="flex:1; background:linear-gradient(135deg,#485563,#29323c);">⚙️ إعدادات الغرفة</button>
+    <button class="menu-btn" id="btnStore" style="flex:1; background:linear-gradient(135deg,#8e2de2,#4a00e0);">🛒 المتجر</button>
+  </div>
+
   <div class="controls-guide">
     🕹️ <b>التحكم:</b> الأسهم أو WASD للقيادة | <b>[Space] أو زر BOOST</b> للانطلاق السريع (كل 5 ثوانٍ)<br>
-    ⏱️ <b>مدة المباراة: 5 دقائق</b> — من يحمل العلم أطول وقت يفوز! | 💥 اصطدم بصديقك لسرقة العلم
+    ⏱️ <b>مدة المباراة: <span id="matchTimeLabel">5 دقائق</span></b> — من يحمل العلم أطول وقت يفوز! | 💥 اصطدم بصديقك لسرقة العلم<br>
+    🚗 <b>سيارتك الحالية:</b> <span id="currentCarLabel">Lamborghini</span>
+  </div>
+</div>
+
+<!-- ============ نافذة إعدادات الغرفة ============ -->
+<div id="settingsModal" class="modal-overlay">
+  <div class="modal-box">
+    <h2>⚙️ إعدادات الغرفة</h2>
+
+    <div class="settings-section">
+      <p class="settings-label">🎨 جودة اللعبة</p>
+      <div class="option-row" id="qualityOptions">
+        <button class="option-btn" data-quality="0">ضعيفة</button>
+        <button class="option-btn" data-quality="1">متوسطة</button>
+        <button class="option-btn active" data-quality="3">عالية</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <p class="settings-label">⏱️ مدة المباراة</p>
+      <div class="option-row" id="durationOptions">
+        <button class="option-btn" data-duration="1">1 دقيقة</button>
+        <button class="option-btn" data-duration="2">2 دقيقة</button>
+        <button class="option-btn" data-duration="3">3 دقائق</button>
+        <button class="option-btn" data-duration="4">4 دقائق</button>
+        <button class="option-btn active" data-duration="5">5 دقائق</button>
+      </div>
+    </div>
+
+    <button class="menu-btn" id="btnSaveSettings" style="background:linear-gradient(135deg,#00b09b,#96c93d); width:100%; margin-top:10px;">✅ حفظ</button>
+  </div>
+</div>
+
+<!-- ============ نافذة المتجر ============ -->
+<div id="storeModal" class="modal-overlay">
+  <div class="modal-box store-box">
+    <h2>🛒 متجر السيارات</h2>
+    <div class="car-grid" id="carGrid"></div>
+    <button class="menu-btn" id="btnCloseStore" style="background:linear-gradient(135deg,#485563,#29323c); width:100%; margin-top:10px;">إغلاق</button>
   </div>
 </div>
 
@@ -141,6 +250,7 @@
     <div class="hud-card" id="scoreBoard">🏆 نقاطك: 0ث</div>
   </div>
   <div class="hud-row" style="margin-top:8px;">
+    <div class="hud-card" id="healthBox">❤️ <div id="healthBarWrap"><div id="healthBar"></div></div><span id="healthText">100</span> | 🤍 <span id="remoteHealthText">100</span></div>
     <div class="hud-card" id="speedBox">🏎️ 0 كم/س</div>
     <div style="display:flex; gap:8px;">
       <div class="hud-card" id="fpsBox">60 FPS</div>
@@ -158,6 +268,15 @@
     <span id="boostText">BOOST</span>
   </div>
 </div>
+
+<div id="specialContainer">
+  <div id="specialBtn">
+    <span id="specialIcon">👻</span>
+    <span id="specialText">قدرة</span>
+  </div>
+</div>
+
+<div id="explosionFlash"></div>
 
 <div id="touchControls">
   <div class="tc-group">
@@ -180,13 +299,53 @@
   let playerName = "Kareem";
   let gameActive = false;
 
-  // ====== مدة المباراة: 5 دقائق ======
-  const MATCH_TIME = 300;        // 300 ثانية = 5 دقائق
+  // ====== مدة المباراة (قابلة للتغيير من إعدادات الغرفة: 1 إلى 5 دقائق) ======
+  let matchDurationMinutes = 5;
+  let MATCH_TIME = matchDurationMinutes * 60;
   let matchTime = MATCH_TIME;
 
+  // ====== جودة اللعبة (يدوي من الإعدادات؛ إن لم يُختار يعمل التكيّف التلقائي) ======
+  let manualQualityChosen = false;
+  let manualQualityLevel = 3;
+
+  // ====== المتجر: بيانات السيارات ======
+  const CAR_DATA = {
+    lamborghini: {
+      name: 'Lamborghini', emoji: '🟡', color: 0xffcc00,
+      price: 'مجانية', ability: 'قدرة الاختفاء: تختفي سيارتك عن صديقك لمدة 10 ثوانٍ',
+      abilityType: 'stealth', abilityLabel: 'اختفاء', abilityIcon: '👻', abilityDuration: 10, abilityCooldown: 15
+    },
+    mercedes: {
+      name: 'Mercedes', emoji: '⚪', color: 0xd7dbe0,
+      price: 'مجانية', ability: 'قدرة الانفجار: تُفجّر سيارتكما معاً في الهواء بقوة فيزيائية مع انفجار مدوٍ (ضرر 45 لكليكما)، وقد تتفجر سيارتك إذا صدمت بقوة ووصلت صحتها للصفر!',
+      abilityType: 'explosion', abilityLabel: 'انفجار', abilityIcon: '💥', abilityDuration: 3, abilityCooldown: 15
+    },
+    jetour: {
+      name: 'Jetour', emoji: '🔴', color: 0xcc2222,
+      price: 'مجانية', ability: 'سرعة أساسية أعلى قليلاً من باقي اللاعبين (قدرة دائمة)',
+      abilityType: 'speed', abilityLabel: '', abilityIcon: '', abilityDuration: 0, abilityCooldown: 0
+    }
+  };
+  let selectedCarType = 'lamborghini';
+  let remoteCarType = 'default';
+
+  // ====== حالة القدرات الخاصة أثناء اللعب ======
+  let abilityCooldown = 0;
+  let remoteStealthTimer = 0;   // عندما يُفعّل صديقك الاختفاء، تُخفى سيارته عندي تماماً لهذه المدة
+  let stealthSelfTimer = 0;     // عندما أُفعّل أنا الاختفاء، تصبح سيارتي شبه شفافة عندي أنا فقط
+  let abilityCdVisual = false;
+
+  // ====== نظام الصحة والانفجار الفيزيائي ======
+  const MAX_HEALTH = 100;
+  let myHealth = MAX_HEALTH;
+  let remoteHealth = MAX_HEALTH;
+  let myExplode = null;      // حالة انفجار سيارتي فيزيائياً {vx,vy,vz,srx,sry,srz,t}
+  let remoteExplode = null;  // حالة انفجار سيارة صديقي فيزيائياً (عندي)
+  let camShake = 0;          // اهتزاز الكاميرا بعد الانفجار
+  let myHealthBar = null, remoteHealthBar = null; // شرائط الصحة فوق السيارتين
+
   // الشبكة (PeerJS)
-  let peer = null, conn = null, 
-   = false;
+  let peer = null, conn = null, isHost = false;
   let lastSent = 0;
 
   // Three.js
@@ -237,6 +396,12 @@
     UI.flag = document.getElementById('flagStatus');
     UI.boostBtn = document.getElementById('boostBtn');
     UI.boostText = document.getElementById('boostText');
+    UI.healthBar = document.getElementById('healthBar');
+    UI.healthText = document.getElementById('healthText');
+    UI.remoteHealthText = document.getElementById('remoteHealthText');
+    UI.specialBtn = document.getElementById('specialBtn');
+    UI.specialIcon = document.getElementById('specialIcon');
+    UI.specialText = document.getElementById('specialText');
   }
 
   // ============ نسيج نوافذ المباني ============
@@ -261,6 +426,31 @@
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(2, 3);
     const etex = new THREE.CanvasTexture(e);
     etex.wrapS = etex.wrapT = THREE.RepeatWrapping; etex.repeat.set(2, 3);
+    return { tex, etex };
+  }
+
+  // نسيج نوافذ لدور واحد (يُكرّر أفقياً على واجهة كل دور)
+  function makeFloorTextures() {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+    const g = c.getContext('2d');
+    g.fillStyle = '#0b101a'; g.fillRect(0, 0, 256, 128);
+    const e = document.createElement('canvas'); e.width = 256; e.height = 128;
+    const ge = e.getContext('2d');
+    ge.fillStyle = '#000'; ge.fillRect(0, 0, 256, 128);
+    const cols = 10, rows = 3, ww = 256 / cols, wh = 128 / rows;
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+      g.fillStyle = Math.random() < 0.85 ? '#151d2c' : '#0d1420';
+      g.fillRect(x * ww + 4, y * wh + 7, ww - 8, wh - 14);
+      if (Math.random() < 0.42) {
+        const warm = Math.random() < 0.62;
+        ge.fillStyle = warm ? 'rgba(255,190,95,0.95)' : 'rgba(140,200,255,0.9)';
+        ge.fillRect(x * ww + 4, y * wh + 7, ww - 8, wh - 14);
+      }
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(2, 1);
+    const etex = new THREE.CanvasTexture(e);
+    etex.wrapS = etex.wrapT = THREE.RepeatWrapping; etex.repeat.set(2, 1);
     return { tex, etex };
   }
 
@@ -340,46 +530,158 @@
     swMesh.receiveShadow = true;
     scene.add(swMesh);
 
-    // ناطحات السحاب
-    const { tex, etex } = makeBuildingTextures();
+    // ناطحات السحاب — أدوار متراصة واقعية: قاعدة مرتفعة + دور أرضي + أدوار متدرجة + سقف
+    // + أبراج زجاجية حقيقية + شرفات بارزة + واجهات محلات ملوّنة لإحساس مدينة حية
+    const floorTexs = makeFloorTextures();
     const bGeo = new THREE.BoxGeometry(1, 1, 1);
-    const bMat = new THREE.MeshStandardMaterial({
-      map: tex, emissiveMap: etex, emissive: 0xffffff, emissiveIntensity: 0.5,
+    const fMat = new THREE.MeshStandardMaterial({
+      map: floorTexs.tex, emissiveMap: floorTexs.etex, emissive: 0xffffff, emissiveIntensity: 0.55,
       roughness: 0.55, metalness: 0.45
     });
-    const MAX_B = 220;
-    const bMesh = new THREE.InstancedMesh(bGeo, bMat, MAX_B);
-    let bi = 0;
+    const glassMat = new THREE.MeshStandardMaterial({
+      map: floorTexs.tex, emissiveMap: floorTexs.etex, emissive: 0xbfe6ff, emissiveIntensity: 0.85,
+      roughness: 0.08, metalness: 0.95
+    });
+    const MAX_FLOORS = 1600;
+    const fMesh = new THREE.InstancedMesh(bGeo, fMat, MAX_FLOORS);
+    const gMesh = new THREE.InstancedMesh(bGeo, glassMat, MAX_FLOORS);
+    const pMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85, metalness: 0.2 });
+    const MAX_P = 260;
+    const pMesh = new THREE.InstancedMesh(bGeo, pMat, MAX_P);
+    const rMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, metalness: 0.1 });
+    const MAX_R = 340;
+    const rMesh = new THREE.InstancedMesh(bGeo, rMat, MAX_R);
+    const balMat = new THREE.MeshStandardMaterial({ color: 0xb7bcc4, roughness: 0.8, metalness: 0.15 });
+    const MAX_BAL = 900;
+    const balMesh = new THREE.InstancedMesh(bGeo, balMat, MAX_BAL);
+    const signColors = [0xff3355, 0xffcc33, 0x33ccff, 0x33ff88, 0xff8833];
+    const signMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const MAX_SIGN = 220;
+    const signMesh = new THREE.InstancedMesh(bGeo, signMat, MAX_SIGN);
+
+    let fi = 0, gi = 0, pi = 0, rri = 0, bali = 0, sgi = 0;
     const blocks = [-200, -120, -40, 40, 120, 200];
     const tmpColor = new THREE.Color();
     for (const bx of blocks) for (const bz of blocks) {
       const n = 2 + Math.floor(Math.random() * 3);
-      for (let i = 0; i < n && bi < MAX_B; i++) {
-        const w = 10 + Math.random() * 14;
-        const d = 10 + Math.random() * 14;
-        const distC = Math.hypot(bx, bz);
-        const h = (16 + Math.random() * 42) * (1 + Math.max(0, (150 - distC) / 150) * 1.3);
+      for (let i = 0; i < n && pi < MAX_P; i++) {
+        const w = 11 + Math.random() * 13;
+        const d = 11 + Math.random() * 13;
         const px = bx + (Math.random() - 0.5) * (64 - w - 8);
         const pz = bz + (Math.random() - 0.5) * (64 - d - 8);
+        if (Math.abs(pz - RAMP.z) < 17 && px > RAMP.x0 - 15 && px < RAMP.x3 + 15) continue; // لا مباني فوق ممر الكوبري الطويل
+        const distC = Math.hypot(bx, bz);
+        const hTotal = (18 + Math.random() * 44) * (1 + Math.max(0, (150 - distC) / 150) * 1.3);
+        const plinth = 0.9 + Math.random() * 0.7;            // قاعدة مرتفعة قليلاً فوق الأرض
+        const groundH = 3.7 + Math.random() * 0.7;           // الدور الأرضي (أطول قليلاً)
+        const nUpper = Math.min(22, Math.max(2, Math.floor((hTotal - plinth - groundH) / 3.05)));
+        const isGlass = hTotal > 34 && Math.random() < 0.3;  // الأبراج الشاهقة فقط زجاجية بالكامل
+        const baseCol = isGlass
+          ? new THREE.Color().setHSL(0.55 + Math.random() * 0.06, 0.35 + Math.random() * 0.2, 0.5 + Math.random() * 0.15)
+          : new THREE.Color().setHSL(0.08 + Math.random() * 0.06, 0.08 + Math.random() * 0.08, 0.58 + Math.random() * 0.24);
+
+        // القاعدة (بدون نوافذ)
         dummy.rotation.set(0, 0, 0);
-        dummy.position.set(px, h / 2, pz);
-        dummy.scale.set(w, h, d);
+        dummy.position.set(px, plinth / 2, pz);
+        dummy.scale.set(w + 0.8, plinth, d + 0.8);
         dummy.updateMatrix();
-        bMesh.setMatrixAt(bi, dummy.matrix);
-        tmpColor.setHSL(0.58 + Math.random() * 0.08, 0.12 + Math.random() * 0.1, 0.55 + Math.random() * 0.3);
-        bMesh.setColorAt(bi, tmpColor);
+        pMesh.setMatrixAt(pi, dummy.matrix);
+        pMesh.setColorAt(pi, baseCol.clone().multiplyScalar(0.5));
+        pi++;
+
+        // واجهة محل ملوّنة عند الشارع (مباني غير زجاجية فقط) — إحساس شارع حي
+        if (!isGlass && sgi < MAX_SIGN && Math.random() < 0.55) {
+          const sSide = Math.random() < 0.5 ? 1 : -1;
+          const sAlongX = Math.random() < 0.5;
+          dummy.rotation.set(0, 0, 0);
+          if (sAlongX) dummy.position.set(px + (Math.random() - 0.5) * (w - 3), plinth + 0.35, pz + sSide * (d / 2 + 0.15));
+          else dummy.position.set(px + sSide * (w / 2 + 0.15), plinth + 0.35, pz + (Math.random() - 0.5) * (d - 3));
+          dummy.scale.set(sAlongX ? 2.6 : 0.3, 0.5, sAlongX ? 0.3 : 2.6);
+          dummy.updateMatrix();
+          signMesh.setMatrixAt(sgi, dummy.matrix);
+          signMesh.setColorAt(sgi, tmpColor.setHex(signColors[Math.floor(Math.random() * signColors.length)]));
+          sgi++;
+        }
+
+        // الدور الأرضي — فوق القاعدة مباشرة
+        let y = plinth;
+        dummy.rotation.set(0, 0, 0);
+        dummy.position.set(px, y + groundH / 2, pz);
+        dummy.scale.set(w, groundH, d);
+        dummy.updateMatrix();
+        if (isGlass) { gMesh.setMatrixAt(gi, dummy.matrix); gMesh.setColorAt(gi, baseCol.clone().offsetHSL(0, 0.02, 0.03)); gi++; }
+        else { fMesh.setMatrixAt(fi, dummy.matrix); fMesh.setColorAt(fi, baseCol.clone().offsetHSL(0, 0.02, 0.03)); fi++; }
+        y += groundH;
+
+        // الأدوار المتكررة — كل دور فوق سابقه وأصغر قليلاً (مباني متدرجة واقعية)
+        let cw = w, cd = d;
+        for (let f = 0; f < nUpper; f++) {
+          if (isGlass && gi >= MAX_FLOORS) break;
+          if (!isGlass && fi >= MAX_FLOORS) break;
+          cw = Math.max(5, cw - 0.34); cd = Math.max(5, cd - 0.34);
+          dummy.position.set(px, y + 3.05 / 2, pz);
+          dummy.scale.set(cw, 3.05, cd);
+          dummy.updateMatrix();
+          if (isGlass) {
+            gMesh.setMatrixAt(gi, dummy.matrix);
+            gMesh.setColorAt(gi, baseCol.clone().offsetHSL(0, 0, (Math.random() - 0.5) * 0.04));
+            gi++;
+          } else {
+            fMesh.setMatrixAt(fi, dummy.matrix);
+            fMesh.setColorAt(fi, baseCol.clone().offsetHSL(0, 0, (Math.random() - 0.5) * 0.05));
+            fi++;
+            // شرفات بارزة كل دورين تقريباً — لمسة واقعية من عمارات المدينة
+            if (f % 2 === 1 && Math.random() < 0.55 && bali < MAX_BAL) {
+              const bSide = Math.random() < 0.5 ? 1 : -1;
+              const bAlongX = Math.random() < 0.5;
+              dummy.rotation.set(0, 0, 0);
+              if (bAlongX) dummy.position.set(px + (Math.random() - 0.5) * (cw - 3), y + 0.15, pz + bSide * (cd / 2 + 0.55));
+              else dummy.position.set(px + bSide * (cw / 2 + 0.55), y + 0.15, pz + (Math.random() - 0.5) * (cd - 3));
+              dummy.scale.set(bAlongX ? 2.2 : 1.1, 0.16, bAlongX ? 1.1 : 2.2);
+              dummy.updateMatrix();
+              balMesh.setMatrixAt(bali, dummy.matrix);
+              balMesh.setColorAt(bali, baseCol.clone().multiplyScalar(0.6));
+              bali++;
+            }
+          }
+          y += 3.05;
+        }
+
+        // سقف + غرفة معدات (الأبراج الزجاجية تبقى بسقف نظيف بلا حشو)
+        if (rri < MAX_R) {
+          dummy.rotation.set(0, 0, 0);
+          dummy.position.set(px, y + 0.2, pz);
+          dummy.scale.set(cw + 0.2, 0.4, cd + 0.2);
+          dummy.updateMatrix();
+          rMesh.setMatrixAt(rri, dummy.matrix);
+          rMesh.setColorAt(rri, baseCol.clone().multiplyScalar(0.45));
+          rri++;
+          if (!isGlass && Math.random() < 0.4 && rri < MAX_R) {
+            const ph = 1.6 + Math.random() * 1.6;
+            dummy.position.set(px + (Math.random() - 0.5) * cw * 0.4, y + 0.4 + ph / 2, pz + (Math.random() - 0.5) * cd * 0.4);
+            dummy.scale.set(3 + Math.random() * 2.5, ph, 3 + Math.random() * 2.5);
+            dummy.updateMatrix();
+            rMesh.setMatrixAt(rri, dummy.matrix);
+            rMesh.setColorAt(rri, baseCol.clone().multiplyScalar(0.35));
+            rri++;
+          }
+        }
+
         boxColliders.push({ x: px, z: pz, hw: w / 2 + 0.4, hd: d / 2 + 0.4 });
-        bi++;
       }
     }
-    bMesh.count = bi;
-    bMesh.castShadow = true;
-    bMesh.receiveShadow = true;
-    scene.add(bMesh);
+    fMesh.count = fi; gMesh.count = gi; pMesh.count = pi; rMesh.count = rri;
+    balMesh.count = bali; signMesh.count = sgi;
+    fMesh.castShadow = true; fMesh.receiveShadow = true;
+    gMesh.castShadow = true; gMesh.receiveShadow = true;
+    pMesh.castShadow = true; pMesh.receiveShadow = true;
+    balMesh.castShadow = true; balMesh.receiveShadow = true;
+    scene.add(fMesh, gMesh, pMesh, rMesh, balMesh, signMesh);
 
     // الكباري
     buildBridge('x', 13, 12);
     buildBridge('z', 23.5, 12);
+    buildRamp();
 
     // كشافات الإنارة
     const lampGeo = new THREE.CylinderGeometry(0.07, 0.1, 7, 6);
@@ -475,6 +777,129 @@
     scene.add(pilMesh);
   }
 
+  // ============ منحدر القيادة (طلوع -> سطح مرتفع طويل جداً كأنه شارع -> نزول) ============
+  const RAMP = { z: 80, halfW: 8, x0: -220, x1: -100, x2: 100, x3: 220, h: 11 };
+
+  function rampProfile(x) {
+    if (x <= RAMP.x0 || x >= RAMP.x3) return 0;
+    if (x < RAMP.x1) return (x - RAMP.x0) / (RAMP.x1 - RAMP.x0) * RAMP.h;
+    if (x > RAMP.x2) return (RAMP.x3 - x) / (RAMP.x3 - RAMP.x2) * RAMP.h;
+    return RAMP.h;
+  }
+
+  // ارتفاع الأرض في نقطة ما (المنحدر فقط — الكباري للمشاهدة)
+  function rampHeightAt(x, z) {
+    if (Math.abs(z - RAMP.z) >= RAMP.halfW) return 0;
+    return rampProfile(x);
+  }
+
+  function buildRamp() {
+    const W = RAMP.halfW * 2, H = RAMP.h, L = RAMP.x1 - RAMP.x0;
+    const deckMat = new THREE.MeshStandardMaterial({ color: 0x1a2029, roughness: 0.85 });
+    const sideMat = new THREE.MeshStandardMaterial({ color: 0x2c3646, roughness: 0.5, metalness: 0.6 });
+    const lineMat = new THREE.MeshBasicMaterial({ color: 0xffd75e });
+    const ang = Math.atan2(H, L);
+    const LEN = Math.hypot(L, H);
+
+    const mk = (len, x, y, rot) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(len, 0.9, W), deckMat);
+      m.position.set(x, y, RAMP.z);
+      m.rotation.z = rot;
+      m.castShadow = true; m.receiveShadow = true;
+      scene.add(m);
+    };
+    mk(LEN, (RAMP.x0 + RAMP.x1) / 2, H / 2 - 0.1, ang);   // طلوع
+    mk(RAMP.x2 - RAMP.x1, 0, H - 0.45, 0);                 // سطح مستوٍ
+    mk(LEN, (RAMP.x2 + RAMP.x3) / 2, H / 2 - 0.1, -ang);   // نزول
+
+    // حواجز جانبية + خطوط حافة مضيئة (للأجزاء المائلة فقط)
+    const railGeo = new THREE.BoxGeometry(1, 0.85, 0.26);
+    const edgeGeo = new THREE.BoxGeometry(1, 0.07, 0.28);
+    const mkSide = (len, x, y, rot) => {
+      for (const s of [-1, 1]) {
+        const r = new THREE.Mesh(railGeo, sideMat);
+        r.scale.x = len;
+        r.position.set(x, y + 0.8, RAMP.z + s * (W / 2 - 0.13));
+        r.rotation.z = rot;
+        scene.add(r);
+        const e = new THREE.Mesh(edgeGeo, lineMat);
+        e.scale.x = len;
+        e.position.set(x, y + 0.52, RAMP.z + s * (W / 2 - 0.55));
+        e.rotation.z = rot;
+        scene.add(e);
+      }
+    };
+    mkSide(LEN, (RAMP.x0 + RAMP.x1) / 2, H / 2 - 0.1, ang);
+    mkSide(LEN, (RAMP.x2 + RAMP.x3) / 2, H / 2 - 0.1, -ang);
+
+    // حواجز تصادم على جوانب الأجزاء المائلة (لا تسد الطريق العمودي تحت السطح)
+    boxColliders.push({ x: (RAMP.x0 + RAMP.x1) / 2, z: RAMP.z - RAMP.halfW - 0.3, hw: L / 2 + 1.5, hd: 0.45 });
+    boxColliders.push({ x: (RAMP.x0 + RAMP.x1) / 2, z: RAMP.z + RAMP.halfW + 0.3, hw: L / 2 + 1.5, hd: 0.45 });
+    boxColliders.push({ x: (RAMP.x2 + RAMP.x3) / 2, z: RAMP.z - RAMP.halfW - 0.3, hw: L / 2 + 1.5, hd: 0.45 });
+    boxColliders.push({ x: (RAMP.x2 + RAMP.x3) / 2, z: RAMP.z + RAMP.halfW + 0.3, hw: L / 2 + 1.5, hd: 0.45 });
+
+    // دعامات على طول الكوبري بالكامل (الأجزاء المائلة + السطح المستوي)
+    // نتجنّب النقاط القريبة من الطرق العمودية (ROAD_OFFSETS) حتى لا نعيق مرور السيارات تحت الجسر
+    const pilGeo = new THREE.CylinderGeometry(1.1, 1.35, 1, 10); // ارتفاع 1 ثم يُعاد قياسه Y حسب الموقع
+    const pilMat = new THREE.MeshStandardMaterial({ color: 0x39424f, roughness: 0.7 });
+    const pillarEdge = RAMP.halfW - 1.4;
+    for (let x = RAMP.x0 + 18; x <= RAMP.x3 - 18; x += 32) {
+      if (ROAD_OFFSETS.some(r => Math.abs(x - r) < 14)) continue; // تجنّب تقاطع الطرق العمودية
+      const h = rampProfile(x);
+      if (h < 1.2) continue;
+      for (const pz of [RAMP.z - pillarEdge, RAMP.z + pillarEdge]) {
+        const p = new THREE.Mesh(pilGeo, pilMat);
+        p.scale.y = h;
+        p.position.set(x, h / 2 - 0.4, pz);
+        p.castShadow = true;
+        scene.add(p);
+        circleColliders.push({ x, z: pz, r: 1.5 });
+      }
+    }
+
+    // ====== أبراج الكابلات + الكابلات المائلة (مظهر كوبري معلّق حقيقي وطويل جداً كطريق كامل) ======
+    const towerMat = new THREE.MeshStandardMaterial({ color: 0xd7dee6, roughness: 0.3, metalness: 0.85 });
+    const cableMat = new THREE.MeshStandardMaterial({ color: 0x9aa6b5, roughness: 0.25, metalness: 0.9 });
+    const beaconMat = new THREE.MeshBasicMaterial({ color: 0xff2244 });
+    const towerH = 20;
+    const towerTopY = H + towerH - 0.3;
+
+    const makeCable = (x1, y1, z1, x2, y2, z2) => {
+      const dx = x2 - x1, dy = y2 - y1, dz = z2 - z1;
+      const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      const c = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, len, 5), cableMat);
+      c.position.set((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2);
+      c.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(dx, dy, dz).normalize());
+      return c;
+    };
+
+    // عدّة أبراج موزّعة على طول الكوبري الطويل بدلاً من برج واحد فقط
+    const towerXs = [];
+    for (let x = RAMP.x1 + 40; x <= RAMP.x2 - 40; x += 60) {
+      if (ROAD_OFFSETS.some(r => Math.abs(x - r) < 16)) continue;
+      towerXs.push(x);
+    }
+    if (towerXs.length === 0) towerXs.push(0);
+
+    for (const tx of towerXs) {
+      for (const s of [-1, 1]) {
+        const tz = RAMP.z + s * (W / 2 + 1.3);
+        const tower = new THREE.Mesh(new THREE.BoxGeometry(1.6, towerH, 1.6), towerMat);
+        tower.position.set(tx, H / 2 + towerH / 2 - 0.3, tz);
+        tower.castShadow = true;
+        scene.add(tower);
+        const beacon = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.3, 1.8), beaconMat);
+        beacon.position.set(tx, towerTopY + 0.15, tz);
+        scene.add(beacon);
+        boxColliders.push({ x: tx, z: tz, hw: 1.1, hd: 1.1 });
+
+        for (let ax = -27; ax <= 27; ax += 6.75) {
+          scene.add(makeCable(tx, towerTopY, tz, tx + ax, H + 0.6, tz));
+        }
+      }
+    }
+  }
+
   // ============ المرور الحي ============
   function buildTraffic() {
     const bodyGeo = new THREE.BoxGeometry(1.9, 0.6, 4.2);
@@ -489,10 +914,14 @@
     for (let i = 0; i < TRAFFIC_COUNT; i++) {
       const axis = Math.random() < 0.5 ? 'x' : 'z';
       const dir = Math.random() < 0.5 ? 1 : -1;
-      const road = ROAD_OFFSETS[Math.floor(Math.random() * ROAD_OFFSETS.length)];
+      // لا مرور على طريق z=80 لأن المنحدر يعلوه
+      const road = axis === 'x'
+        ? [-160, -80, 0, 160][Math.floor(Math.random() * 4)]
+        : ROAD_OFFSETS[Math.floor(Math.random() * ROAD_OFFSETS.length)];
       traffic.push({
         axis, dir, road,
         pos: (Math.random() - 0.5) * 560,
+        y: 0,
         speed: 15 + Math.random() * 12
       });
       tmpC.setHex(colors[i % colors.length]);
@@ -512,12 +941,16 @@
       if (t.axis === 'x') { x = t.pos; z = t.road + lane; yaw = t.dir > 0 ? Math.PI / 2 : -Math.PI / 2; }
       else { x = t.road - lane; z = t.pos; yaw = t.dir > 0 ? 0 : Math.PI; }
 
+      // المرور تحت السطح المستوٍ يبقى على الأرض (لا يقفز فوق المنحدر)
+      const gh0 = rampHeightAt(x, z);
+      if (Math.abs(gh0 - t.y) < 2.5) t.y = gh0;
+      const gh = t.y;
       dummy.rotation.set(0, yaw, 0);
-      dummy.position.set(x, 0.5, z);
+      dummy.position.set(x, 0.5 + gh, z);
       dummy.scale.set(1, 1, 1);
       dummy.updateMatrix();
       trafficBodyMesh.setMatrixAt(i, dummy.matrix);
-      dummy.position.set(x + Math.sin(yaw) * -0.3, 1.0, z + Math.cos(yaw) * -0.3);
+      dummy.position.set(x + Math.sin(yaw) * -0.3, 1.0 + gh, z + Math.cos(yaw) * -0.3);
       dummy.updateMatrix();
       trafficCabinMesh.setMatrixAt(i, dummy.matrix);
 
@@ -527,6 +960,7 @@
         const d = Math.sqrt(d2);
         myCar.x += (dx / d) * (3.1 - d);
         myCar.z += (dz / d) * (3.1 - d);
+        damageMyCar(Math.abs(myCar.speed) * 0.8);
         myCar.speed *= 0.45;
       }
     }
@@ -534,80 +968,35 @@
     trafficCabinMesh.instanceMatrix.needsUpdate = true;
   }
 
-  // ============ سيارة واقعية ============
-  function createRealCar(colorHex) {
-    const group = new THREE.Group();
-    const paint = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.12, metalness: 0.9 });
-    const dark = new THREE.MeshStandardMaterial({ color: 0x0b0c10, roughness: 0.85, metalness: 0.3 });
-    const glass = new THREE.MeshStandardMaterial({ color: 0x0a1420, roughness: 0.03, metalness: 0.95 });
-    const chrome = new THREE.MeshStandardMaterial({ color: 0xb8bcc4, roughness: 0.2, metalness: 1.0 });
+  // ============ سيارات واقعية (أشكال مميزة لكل سيارة) ============
+
+  // أدوات ومواد مشتركة: عجلات + مخروط إضاءة أمامي، تُستخدم من كل الطرازات
+  function buildWheelsAndLights(group, opts) {
+    const {
+      tireR = 0.52, tireW = 0.4, rimR = 0.3, discR = 0.18,
+      trackX = 1.28, frontZ = 1.45, rearZ = -1.45, wheelY = null
+    } = opts || {};
+    const wy = wheelY !== null ? wheelY : tireR;
+
     const tireMat = new THREE.MeshStandardMaterial({ color: 0x0e0e10, roughness: 0.92 });
     const rimMat = new THREE.MeshStandardMaterial({ color: 0xd0d4da, roughness: 0.25, metalness: 0.95 });
-
-    const add = (geo, mat, x, y, z, rx = 0, ry = 0, rz = 0, shadow = true) => {
-      const m = new THREE.Mesh(geo, mat);
-      m.position.set(x, y, z);
-      m.rotation.set(rx, ry, rz);
-      if (shadow) m.castShadow = true;
-      group.add(m);
-      return m;
-    };
-
-    add(new THREE.BoxGeometry(2.3, 0.3, 4.6), dark, 0, 0.42, 0);
-    add(new THREE.BoxGeometry(2.35, 0.5, 4.65), paint, 0, 0.88, 0);
-    add(new THREE.BoxGeometry(2.28, 0.14, 1.5), paint, 0, 1.18, 1.45, 0.05);
-    add(new THREE.BoxGeometry(2.28, 0.14, 1.1), paint, 0, 1.18, -1.75);
-    add(new THREE.BoxGeometry(2.4, 0.14, 0.5), dark, 0, 0.38, 2.35);
-    add(new THREE.BoxGeometry(2.3, 0.22, 0.4), dark, 0, 0.42, -2.35);
-
-    add(new THREE.BoxGeometry(1.95, 0.5, 2.15), glass, 0, 1.48, -0.2);
-    add(new THREE.BoxGeometry(1.92, 0.06, 1.15), glass, 0, 1.32, 0.98, -0.62);
-    add(new THREE.BoxGeometry(1.92, 0.06, 1.0), glass, 0, 1.32, -1.35, 0.58);
-
-    add(new THREE.BoxGeometry(0.12, 0.3, 0.12), dark, -0.85, 1.42, -2.15);
-    add(new THREE.BoxGeometry(0.12, 0.3, 0.12), dark, 0.85, 1.42, -2.15);
-    add(new THREE.BoxGeometry(2.1, 0.07, 0.55), paint, 0, 1.6, -2.2);
-    add(new THREE.BoxGeometry(0.14, 0.12, 0.28), paint, -1.28, 1.32, 0.55);
-    add(new THREE.BoxGeometry(0.14, 0.12, 0.28), paint, 1.28, 1.32, 0.55);
-    const exGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.3, 10);
-    exGeo.rotateX(Math.PI / 2);
-    add(exGeo, chrome, -0.55, 0.4, -2.4);
-    add(exGeo, chrome, 0.55, 0.4, -2.4);
-
-    const hlMat = new THREE.MeshBasicMaterial({ color: 0xf8fbff });
-    add(new THREE.BoxGeometry(0.6, 0.16, 0.1), hlMat, -0.82, 0.95, 2.35, 0, 0, 0, false);
-    add(new THREE.BoxGeometry(0.6, 0.16, 0.1), hlMat, 0.82, 0.95, 2.35, 0, 0, 0, false);
-    const tlMat = new THREE.MeshBasicMaterial({ color: 0xff1a33 });
-    add(new THREE.BoxGeometry(1.9, 0.13, 0.06), tlMat, 0, 0.98, -2.36, 0, 0, 0, false);
-
-    const coneGeo = new THREE.ConeGeometry(2.0, 10, 12, 1, true);
-    coneGeo.rotateX(-Math.PI / 2);
-    coneGeo.translate(0, 0, 5);
-    const coneMat = new THREE.MeshBasicMaterial({ color: 0xfff3cc, transparent: true, opacity: 0.06, depthWrite: false });
-    add(coneGeo, coneMat, -0.8, 0.95, 2.3, 0, 0, 0, false);
-    add(coneGeo, coneMat, 0.8, 0.95, 2.3, 0, 0, 0, false);
-
-    const spot = new THREE.SpotLight(0xfff2cc, 1.5, 70, 0.42, 0.5, 1.2);
-    spot.position.set(0, 1.1, 2.2);
-    spot.target.position.set(0, 0, 30);
-    group.add(spot, spot.target);
-
-    const tireGeo = new THREE.CylinderGeometry(0.52, 0.52, 0.4, 16);
-    tireGeo.rotateZ(Math.PI / 2);
-    const rimGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.42, 12);
-    rimGeo.rotateZ(Math.PI / 2);
-    const discGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.44, 10);
-    discGeo.rotateZ(Math.PI / 2);
     const discMat = new THREE.MeshStandardMaterial({ color: 0x8a8f98, roughness: 0.35, metalness: 0.9 });
+
+    const tireGeo = new THREE.CylinderGeometry(tireR, tireR, tireW, 16);
+    tireGeo.rotateZ(Math.PI / 2);
+    const rimGeo = new THREE.CylinderGeometry(rimR, rimR, tireW + 0.02, 12);
+    rimGeo.rotateZ(Math.PI / 2);
+    const discGeo = new THREE.CylinderGeometry(discR, discR, tireW + 0.04, 10);
+    discGeo.rotateZ(Math.PI / 2);
 
     const wheels = [];
     const positions = [
-      [-1.28, 0.52, 1.45, true], [1.28, 0.52, 1.45, true],
-      [-1.28, 0.52, -1.45, false], [1.28, 0.52, -1.45, false]
+      [-trackX, wy, frontZ, true], [trackX, wy, frontZ, true],
+      [-trackX, wy, rearZ, false], [trackX, wy, rearZ, false]
     ];
-    for (const [wx, wy, wz, front] of positions) {
+    for (const [wx, wyy, wz, front] of positions) {
       const wg = new THREE.Group();
-      wg.position.set(wx, wy, wz);
+      wg.position.set(wx, wyy, wz);
       const tire = new THREE.Mesh(tireGeo, tireMat); tire.castShadow = true;
       const rim = new THREE.Mesh(rimGeo, rimMat);
       const disc = new THREE.Mesh(discGeo, discMat);
@@ -615,9 +1004,228 @@
       group.add(wg);
       wheels.push({ group: wg, front });
     }
+    return wheels;
+  }
+
+  function attachHeadlightCone(add, x, y, z) {
+    const coneGeo = new THREE.ConeGeometry(2.0, 10, 12, 1, true);
+    coneGeo.rotateX(-Math.PI / 2);
+    coneGeo.translate(0, 0, 5);
+    const coneMat = new THREE.MeshBasicMaterial({ color: 0xfff3cc, transparent: true, opacity: 0.06, depthWrite: false });
+    add(coneGeo, coneMat, x, y, z, 0, 0, 0, false);
+  }
+
+  function makeAddFn(group) {
+    return (geo, mat, x, y, z, rx = 0, ry = 0, rz = 0, shadow = true) => {
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, y, z);
+      m.rotation.set(rx, ry, rz);
+      if (shadow) m.castShadow = true;
+      group.add(m);
+      return m;
+    };
+  }
+
+  // ---------- لامبورغيني: جسم إسفيني منخفض جداً وعريض، أنف حاد، جناح خلفي كبير ----------
+  function createLamborghini(colorHex) {
+    const group = new THREE.Group();
+    const add = makeAddFn(group);
+    const paint = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.1, metalness: 0.9 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x0a0a0c, roughness: 0.75, metalness: 0.3 });
+    const glass = new THREE.MeshStandardMaterial({ color: 0x0a1420, roughness: 0.03, metalness: 0.95 });
+    const carbon = new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: 0.4, metalness: 0.6 });
+    const chrome = new THREE.MeshStandardMaterial({ color: 0xb8bcc4, roughness: 0.2, metalness: 1.0 });
+    const hlMat = new THREE.MeshBasicMaterial({ color: 0xf8fbff });
+    const tlMat = new THREE.MeshBasicMaterial({ color: 0xff1a33 });
+
+    // هيكل سفلي منخفض جداً
+    add(new THREE.BoxGeometry(1.95, 0.2, 4.9), dark, 0, 0.26, 0);
+    // إسفين الأنف الحاد (يضيق كلما اقترب من المقدمة)
+    add(new THREE.BoxGeometry(1.55, 0.22, 1.0), paint, 0, 0.5, 2.15);
+    add(new THREE.BoxGeometry(1.85, 0.26, 0.9), paint, 0, 0.52, 1.35);
+    add(new THREE.BoxGeometry(2.05, 0.14, 0.4), dark, 0, 0.36, 2.55); // مصد أمامي منخفض / سبويلر سفلي
+    // منتصف الجسم العريض (الأرداف الخلفية العريضة المميزة)
+    add(new THREE.BoxGeometry(2.05, 0.34, 1.6), paint, 0, 0.6, 0.15);
+    add(new THREE.BoxGeometry(2.15, 0.4, 1.3), paint, 0, 0.62, -1.15); // أرداف خلفية عريضة
+    // قمرة قيادة منخفضة جداً وصغيرة، زجاج أمامي شديد الانحدار
+    add(new THREE.BoxGeometry(1.5, 0.42, 1.1), glass, 0, 0.98, 0.55, -0.32);
+    add(new THREE.BoxGeometry(1.15, 0.3, 0.9), paint, 0, 1.18, 0.0); // سقف صغير مسطح
+    add(new THREE.BoxGeometry(1.45, 0.3, 0.55), glass, 0, 0.98, -0.85, 0.28);
+    // غطاء المحرك الخلفي مع فتحات تهوية (شرائح كربون رفيعة)
+    add(new THREE.BoxGeometry(1.85, 0.16, 1.1), carbon, 0, 0.82, -1.75);
+    for (let i = -2; i <= 2; i++) add(new THREE.BoxGeometry(0.08, 0.03, 1.0), dark, i * 0.32, 0.91, -1.75, 0, 0, 0, false);
+    add(new THREE.BoxGeometry(2.1, 0.3, 0.35), paint, 0, 0.5, -2.35); // مؤخرة عريضة
+    add(new THREE.BoxGeometry(2.0, 0.1, 0.3), dark, 0, 0.32, -2.5); // ديفيوزر خلفي
+
+    // جناح خلفي مرتفع على دعامتين (سمة لامبورغيني المميزة)
+    add(new THREE.BoxGeometry(0.09, 0.32, 0.09), carbon, -0.7, 1.1, -2.15);
+    add(new THREE.BoxGeometry(0.09, 0.32, 0.09), carbon, 0.7, 1.1, -2.15);
+    add(new THREE.BoxGeometry(1.9, 0.06, 0.5), carbon, 0, 1.28, -2.2);
+
+    // مصابيح أمامية حادة على شكل Y (سمة لامبورغيني المميزة)
+    for (const s of [-1, 1]) {
+      add(new THREE.BoxGeometry(0.42, 0.07, 0.08), hlMat, s * 0.78, 0.68, 2.5, 0, 0, s * 0.5, false);
+      add(new THREE.BoxGeometry(0.22, 0.07, 0.08), hlMat, s * 0.6, 0.55, 2.55, 0, 0, -s * 0.4, false);
+    }
+    // مصابيح خلفية سداسية رفيعة
+    for (const s of [-1, 1]) add(new THREE.BoxGeometry(0.55, 0.1, 0.06), tlMat, s * 0.75, 0.62, -2.53, 0, 0, s * 0.15, false);
+
+    const exGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.25, 10);
+    exGeo.rotateX(Math.PI / 2);
+    add(exGeo, chrome, -0.4, 0.35, -2.55);
+    add(exGeo, chrome, 0.4, 0.35, -2.55);
+
+    attachHeadlightCone(add, -0.78, 0.68, 2.4);
+    attachHeadlightCone(add, 0.78, 0.68, 2.4);
+    const spot = new THREE.SpotLight(0xfff2cc, 1.5, 70, 0.42, 0.5, 1.2);
+    spot.position.set(0, 0.75, 2.3);
+    spot.target.position.set(0, 0, 30);
+    group.add(spot, spot.target);
+
+    const wheels = buildWheelsAndLights(group, {
+      tireR: 0.54, tireW: 0.42, rimR: 0.32, discR: 0.19,
+      trackX: 1.35, frontZ: 1.55, rearZ: -1.55
+    });
 
     scene.add(group);
     return { mesh: group, wheels };
+  }
+
+  // ---------- مرسيدس: جسم سيدان أنيق طويل، شبك أمامي بارز مع شعار النجمة، شريط إضاءة خلفي كامل ----------
+  function createMercedes(colorHex) {
+    const group = new THREE.Group();
+    const add = makeAddFn(group);
+    const paint = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.12, metalness: 0.85 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x0b0c10, roughness: 0.8, metalness: 0.3 });
+    const glass = new THREE.MeshStandardMaterial({ color: 0x0a1420, roughness: 0.03, metalness: 0.95 });
+    const chrome = new THREE.MeshStandardMaterial({ color: 0xc4c8d0, roughness: 0.12, metalness: 1.0 });
+    const hlMat = new THREE.MeshBasicMaterial({ color: 0xf8fbff });
+    const tlMat = new THREE.MeshBasicMaterial({ color: 0xff1a33 });
+
+    add(new THREE.BoxGeometry(2.0, 0.24, 4.75), dark, 0, 0.34, 0);
+    // غطاء محرك طويل (سمة سيدان فاخرة)
+    add(new THREE.BoxGeometry(1.95, 0.34, 1.75), paint, 0, 0.66, 1.35);
+    // هيكل الجسم الرئيسي
+    add(new THREE.BoxGeometry(2.0, 0.5, 2.0), paint, 0, 0.72, -0.35);
+    // صندوق خلفي قصير
+    add(new THREE.BoxGeometry(1.95, 0.36, 1.2), paint, 0, 0.72, -1.85);
+    // خط النافذة اللامع (شريط كروم على طول الجسم)
+    add(new THREE.BoxGeometry(2.02, 0.05, 3.6), chrome, 0, 0.95, -0.2, 0, 0, 0, false);
+
+    // مقصورة/سقف طويل مع زجاج أمامي مائل بلطف
+    add(new THREE.BoxGeometry(1.9, 0.42, 1.9), glass, 0, 1.16, 0.15, -0.12);
+    add(new THREE.BoxGeometry(1.55, 0.3, 1.7), paint, 0, 1.38, -0.35); // سقف
+    add(new THREE.BoxGeometry(1.85, 0.34, 0.9), glass, 0, 1.16, -1.15, 0.18);
+
+    // شبك أمامي بارز مع محيط كروم وشعار دائري (سمة مرسيدس المميزة)
+    add(new THREE.BoxGeometry(1.35, 0.5, 0.1), chrome, 0, 0.66, 2.28);
+    add(new THREE.BoxGeometry(1.2, 0.4, 0.06), dark, 0, 0.66, 2.34);
+    const badgeGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.06, 20);
+    add(badgeGeo, chrome, 0, 0.66, 2.4, Math.PI / 2, 0, 0);
+    add(new THREE.BoxGeometry(2.0, 0.12, 0.3), dark, 0, 0.42, 2.35); // مصد أمامي سفلي
+
+    // مصابيح أمامية رفيعة انسيابية
+    for (const s of [-1, 1]) add(new THREE.BoxGeometry(0.5, 0.13, 0.08), hlMat, s * 0.78, 0.78, 2.32, 0, 0, 0, false);
+    // شريط إضاءة خلفي بعرض كامل (سمة مرسيدس الحديثة)
+    add(new THREE.BoxGeometry(1.9, 0.1, 0.06), tlMat, 0, 0.82, -2.42, 0, 0, 0, false);
+    add(new THREE.BoxGeometry(0.1, 0.1, 0.2), tlMat, -0.95, 0.82, -2.35, 0, 0.5, 0, false);
+    add(new THREE.BoxGeometry(0.1, 0.1, 0.2), tlMat, 0.95, 0.82, -2.35, 0, -0.5, 0, false);
+    add(new THREE.BoxGeometry(2.0, 0.14, 0.3), dark, 0, 0.42, -2.4); // مصد خلفي سفلي
+
+    const exGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.28, 10);
+    exGeo.rotateX(Math.PI / 2);
+    add(exGeo, chrome, -0.5, 0.36, -2.5);
+    add(exGeo, chrome, 0.5, 0.36, -2.5);
+
+    attachHeadlightCone(add, -0.78, 0.78, 2.3);
+    attachHeadlightCone(add, 0.78, 0.78, 2.3);
+    const spot = new THREE.SpotLight(0xfff2cc, 1.5, 70, 0.42, 0.5, 1.2);
+    spot.position.set(0, 0.9, 2.2);
+    spot.target.position.set(0, 0, 30);
+    group.add(spot, spot.target);
+
+    const wheels = buildWheelsAndLights(group, {
+      tireR: 0.5, tireW: 0.38, rimR: 0.31, discR: 0.2,
+      trackX: 1.25, frontZ: 1.5, rearZ: -1.45
+    });
+
+    scene.add(group);
+    return { mesh: group, wheels };
+  }
+
+  // ---------- جيتور: جسم SUV مربّع وطويل القامة، حواف بلاستيكية سوداء، قضبان سقف ----------
+  function createJetour(colorHex) {
+    const group = new THREE.Group();
+    const add = makeAddFn(group);
+    const paint = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.25, metalness: 0.6 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x111318, roughness: 0.85, metalness: 0.2 });
+    const glass = new THREE.MeshStandardMaterial({ color: 0x0a1420, roughness: 0.05, metalness: 0.9 });
+    const chrome = new THREE.MeshStandardMaterial({ color: 0xb8bcc4, roughness: 0.25, metalness: 0.95 });
+    const hlMat = new THREE.MeshBasicMaterial({ color: 0xf8fbff });
+    const tlMat = new THREE.MeshBasicMaterial({ color: 0xff1a33 });
+
+    // خلوص أرضي أعلى (SUV)
+    add(new THREE.BoxGeometry(2.05, 0.3, 4.5), dark, 0, 0.58, 0);
+    // حزام بلاستيكي أسود يلف أسفل الهيكل (سمة SUV مميزة)
+    add(new THREE.BoxGeometry(2.18, 0.22, 4.5), dark, 0, 0.76, 0);
+    // الهيكل المربّع الرئيسي
+    add(new THREE.BoxGeometry(2.05, 0.62, 3.2), paint, 0, 1.14, -0.15);
+    // غطاء محرك مسطح وقصير نسبياً
+    add(new THREE.BoxGeometry(2.0, 0.34, 1.1), paint, 0, 1.28, 1.75);
+    add(new THREE.BoxGeometry(2.1, 0.16, 0.35), dark, 0, 1.0, 2.28); // مصد أمامي سفلي
+
+    // مقصورة مربعة طويلة مع أعمدة C عريضة (سمة SUV)
+    add(new THREE.BoxGeometry(1.85, 0.55, 2.6), glass, 0, 1.62, -0.2);
+    add(new THREE.BoxGeometry(1.9, 0.16, 2.7), paint, 0, 1.92, -0.2); // سقف مسطح
+
+    // قضبان السقف (سمة جيتور/SUV المميزة)
+    add(new THREE.BoxGeometry(0.08, 0.09, 2.4), dark, -0.75, 2.03, -0.2);
+    add(new THREE.BoxGeometry(0.08, 0.09, 2.4), dark, 0.75, 2.03, -0.2);
+    for (const s of [-1, 1]) {
+      add(new THREE.BoxGeometry(0.08, 0.1, 0.1), dark, s * 0.75, 1.98, 0.9);
+      add(new THREE.BoxGeometry(0.08, 0.1, 0.1), dark, s * 0.75, 1.98, -1.3);
+    }
+
+    // شبك أمامي كبير بمحيط كروم (سمة جيتور)
+    add(new THREE.BoxGeometry(1.55, 0.55, 0.12), chrome, 0, 1.15, 2.28);
+    add(new THREE.BoxGeometry(1.4, 0.42, 0.08), dark, 0, 1.15, 2.33);
+    add(new THREE.BoxGeometry(2.2, 0.18, 0.35), dark, 0, 0.7, 2.3); // مصد أمامي عريض
+
+    // مصابيح أمامية عمودية مقسّمة (سمة SUV صينية حديثة)
+    for (const s of [-1, 1]) {
+      add(new THREE.BoxGeometry(0.14, 0.4, 0.1), hlMat, s * 0.92, 1.28, 2.3, 0, 0, 0, false);
+      add(new THREE.BoxGeometry(0.4, 0.1, 0.08), hlMat, s * 0.75, 1.0, 2.3, 0, 0, 0, false);
+    }
+    // مصابيح خلفية على شكل L عمودية
+    for (const s of [-1, 1]) {
+      add(new THREE.BoxGeometry(0.14, 0.45, 0.08), tlMat, s * 0.9, 1.3, -2.28, 0, 0, 0, false);
+      add(new THREE.BoxGeometry(0.4, 0.1, 0.06), tlMat, s * 0.72, 1.08, -2.28, 0, 0, 0, false);
+    }
+    add(new THREE.BoxGeometry(2.05, 0.5, 0.2), paint, 0, 1.15, -2.15); // باب خلفي مسطح
+    add(new THREE.BoxGeometry(2.2, 0.18, 0.35), dark, 0, 0.7, -2.25); // مصد خلفي عريض
+
+    attachHeadlightCone(add, -0.85, 1.15, 2.3);
+    attachHeadlightCone(add, 0.85, 1.15, 2.3);
+    const spot = new THREE.SpotLight(0xfff2cc, 1.5, 70, 0.42, 0.5, 1.2);
+    spot.position.set(0, 1.2, 2.2);
+    spot.target.position.set(0, 0, 30);
+    group.add(spot, spot.target);
+
+    const wheels = buildWheelsAndLights(group, {
+      tireR: 0.6, tireW: 0.44, rimR: 0.33, discR: 0.2,
+      trackX: 1.32, frontZ: 1.5, rearZ: -1.4
+    });
+
+    scene.add(group);
+    return { mesh: group, wheels };
+  }
+
+  // موزّع: يبني الشكل المناسب حسب نوع السيارة المختارة
+  function createRealCar(colorHex, carType) {
+    if (carType === 'lamborghini') return createLamborghini(colorHex);
+    if (carType === 'mercedes') return createMercedes(colorHex);
+    if (carType === 'jetour') return createJetour(colorHex);
+    return createMercedes(colorHex); // شكل افتراضي عام
   }
 
   // ============ تهيئة المشهد ============
@@ -635,8 +1243,8 @@
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
-    // PCFSoft أثقل بكثير من PCF — نستخدم PCF للحفاظ على 60 إطار
-    renderer.shadowMap.type = THREE.PCFShadowMap;
+    // PCFSoft أنعم وأكثر واقعية، لكنه أثقل — نستخدمه على الأجهزة القوية فقط للحفاظ على 60 إطار على الموبايل
+    renderer.shadowMap.type = isMobile ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.15;
     document.body.appendChild(renderer.domElement);
@@ -718,7 +1326,7 @@
     }
   }
 
-  function triggerBoostParticles(x, z, angle, count) {
+  function triggerBoostParticles(x, z, y, angle, count) {
     count = count || 2;
     for (let i = 0; i < count; i++) {
       let p = null;
@@ -735,7 +1343,7 @@
       p.mesh.scale.setScalar(0.7 + Math.random() * 0.7);
       p.mesh.position.set(
         x - Math.sin(angle) * 2.5 + (Math.random() - 0.5) * 0.7,
-        0.45 + Math.random() * 0.5,
+        y + 0.45 + Math.random() * 0.5,
         z - Math.cos(angle) * 2.5 + (Math.random() - 0.5) * 0.7
       );
     }
@@ -783,10 +1391,72 @@
     engGain.gain.setTargetAtTime(gameActive ? 0.035 + sr * 0.05 : 0, audioCtx.currentTime, 0.1);
   }
 
+  // ============ إعدادات الغرفة والمتجر (واجهة) ============
+  function renderCarGrid() {
+    const grid = document.getElementById('carGrid');
+    grid.innerHTML = '';
+    for (const key in CAR_DATA) {
+      const c = CAR_DATA[key];
+      const card = document.createElement('div');
+      card.className = 'car-card' + (selectedCarType === key ? ' selected' : '');
+      card.innerHTML = `
+        <div class="car-swatch" style="background:#${c.color.toString(16).padStart(6,'0')};">${c.emoji}</div>
+        <div class="car-info">
+          <div class="car-name">${c.name}</div>
+          <div class="car-ability">${c.ability}</div>
+          <div class="car-price">💰 ${c.price}</div>
+        </div>
+        <button class="car-select-btn${selectedCarType === key ? ' chosen' : ''}" data-car="${key}">
+          ${selectedCarType === key ? '✅ محددة' : 'اختيار'}
+        </button>`;
+      grid.appendChild(card);
+    }
+    grid.querySelectorAll('.car-select-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedCarType = btn.getAttribute('data-car');
+        document.getElementById('currentCarLabel').innerText = CAR_DATA[selectedCarType].name;
+        renderCarGrid();
+      });
+    });
+  }
+
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
   // ============ الشبكة ============
   window.addEventListener('load', () => {
     cacheUI();
     const loginError = document.getElementById('loginError');
+    renderCarGrid();
+    document.getElementById('currentCarLabel').innerText = CAR_DATA[selectedCarType].name;
+
+    document.getElementById('btnSettings').addEventListener('click', () => openModal('settingsModal'));
+    document.getElementById('btnStore').addEventListener('click', () => openModal('storeModal'));
+    document.getElementById('btnCloseStore').addEventListener('click', () => closeModal('storeModal'));
+
+    document.querySelectorAll('#qualityOptions .option-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#qualityOptions .option-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        manualQualityChosen = true;
+        manualQualityLevel = parseInt(btn.getAttribute('data-quality'), 10);
+      });
+    });
+    document.querySelectorAll('#durationOptions .option-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#durationOptions .option-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        matchDurationMinutes = parseInt(btn.getAttribute('data-duration'), 10);
+      });
+    });
+    document.getElementById('btnSaveSettings').addEventListener('click', () => {
+      MATCH_TIME = matchDurationMinutes * 60;
+      document.getElementById('matchTimeLabel').innerText =
+        matchDurationMinutes === 1 ? 'دقيقة واحدة' : (matchDurationMinutes === 2 ? 'دقيقتين' : matchDurationMinutes + ' دقائق');
+      manualQualityChosen = true;
+      if (renderer) applyQuality(manualQualityLevel);
+      closeModal('settingsModal');
+    });
 
     document.getElementById('btnCreateRoom').addEventListener('click', () => {
       playerName = document.getElementById('nameInput').value.trim() || "Kareem";
@@ -802,6 +1472,8 @@
       peer.on('connection', (c) => {
         conn = c;
         setupPeerConnection();
+        conn.send({ type: 'settings', matchTime: MATCH_TIME });
+        conn.send({ type: 'carSelect', car: selectedCarType });
         loginError.innerText = "🎉 انضم صديقك! المعركة تبدأ الآن...";
         setTimeout(() => startGame(true), 1000);
       });
@@ -819,6 +1491,7 @@
         conn = peer.connect('flag-3d-pro-' + code);
         conn.on('open', () => {
           setupPeerConnection();
+          conn.send({ type: 'carSelect', car: selectedCarType });
           loginError.innerText = "🎉 تم الاتصال بنجاح! جاري تحميل المدينة...";
           setTimeout(() => startGame(false), 1000);
         });
@@ -830,6 +1503,11 @@
     const triggerBoost = (e) => { if (e) e.preventDefault(); activateBoost(); };
     boostBtn.addEventListener('click', triggerBoost);
     boostBtn.addEventListener('touchstart', triggerBoost, { passive: false });
+
+    const specialBtn = document.getElementById('specialBtn');
+    const triggerSpecial = (e) => { if (e) e.preventDefault(); activateSpecialAbility(); };
+    specialBtn.addEventListener('click', triggerSpecial);
+    specialBtn.addEventListener('touchstart', triggerSpecial, { passive: false });
 
     document.getElementById('againBtn').addEventListener('click', () => location.reload());
     document.getElementById('soundBtn').addEventListener('click', () => {
@@ -843,10 +1521,28 @@
 
   function setupPeerConnection() {
     conn.on('data', (data) => {
+      if (data.type === 'settings' && !isHost) {
+        if (typeof data.matchTime === 'number') MATCH_TIME = data.matchTime;
+        return;
+      }
+      if (data.type === 'carSelect') {
+        remoteCarType = data.car;
+        return;
+      }
+      if (data.type === 'ability') {
+        handleRemoteAbility(data.car);
+        return;
+      }
       if (data.type === 'sync' && remoteCar) {
         remoteCar.tx = data.x; remoteCar.tz = data.z;
         remoteCar.tangle = data.angle; remoteCar.troll = data.roll || 0; remoteCar.tpitch = data.pitch || 0;
         remoteCar.score = data.score;
+        if (typeof data.hp === 'number') {
+          remoteHealth = data.hp;
+          if (remoteHealth <= 0 && !remoteExplode) explodeCarPhysically(false, 0);
+          if (UI.remoteHealthText) UI.remoteHealthText.innerText = Math.round(Math.max(0, remoteHealth));
+          if (remoteHealthBar) remoteHealthBar.update(remoteHealth);
+        }
 
         if (!isHost) {
           // مؤقّت المضيف هو المرجع
@@ -869,7 +1565,7 @@
           const now = performance.now();
           if (now - lastRemoteBoostEmit > 55) {
             lastRemoteBoostEmit = now;
-            triggerBoostParticles(data.x, data.z, data.angle, 1);
+            triggerBoostParticles(data.x, data.z, data.y || 0, data.angle, 1);
           }
         }
       }
@@ -887,6 +1583,203 @@
     }
   }
 
+  // ============ القدرات الخاصة للسيارات ============
+  // يجعل سيارة معيّنة شبه شفافة (يُستخدم فقط على سيارة صاحبها، أثناء تفعيل قدرة الاختفاء)
+  function setCarTransparency(mesh, active) {
+    mesh.traverse((obj) => {
+      if (!obj.isMesh || !obj.material) return;
+      const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+      for (const mat of mats) {
+        if (active) {
+          if (mat.userData.origOpacity === undefined) {
+            mat.userData.origOpacity = mat.opacity;
+            mat.userData.origTransparent = mat.transparent;
+            mat.userData.origDepthWrite = mat.depthWrite;
+          }
+          mat.transparent = true;
+          mat.opacity = 0.28;
+          mat.depthWrite = false;
+        } else if (mat.userData.origOpacity !== undefined) {
+          mat.opacity = mat.userData.origOpacity;
+          mat.transparent = mat.userData.origTransparent;
+          mat.depthWrite = mat.userData.origDepthWrite;
+        }
+      }
+    });
+  }
+
+  function activateSpecialAbility() {
+    if (!gameActive || abilityCooldown > 0) return;
+    const car = CAR_DATA[selectedCarType];
+    if (car.abilityType === 'stealth') {
+      abilityCooldown = car.abilityCooldown;
+      stealthSelfTimer = car.abilityDuration;
+      setCarTransparency(myCar.mesh, true);
+      showToast('👻 سيارتك شبه شفافة عندك، ومختفية تماماً عن صديقك لمدة 10 ثوانٍ!');
+      if (conn && conn.open) conn.send({ type: 'ability', car: 'lamborghini' });
+    } else if (car.abilityType === 'explosion') {
+      abilityCooldown = car.abilityCooldown;
+      explodeCarPhysically(true, 45);  // سيارتي تُقذف في الهواء (ضرر 45، لا تقتل وحدها)
+      explodeCarPhysically(false, 0);  // سيارة صديقي تُقذف عندي (وهو يطبق ضرره عند جهازه)
+      showToast('💥 انفجار مدوٍ! قذفت سيارتكما في الهواء!');
+      if (conn && conn.open) conn.send({ type: 'ability', car: 'mercedes' });
+    }
+  }
+
+  // يُستدعى عند وصول قدرة من الصديق عبر الشبكة
+  function handleRemoteAbility(car) {
+    if (car === 'lamborghini') {
+      remoteStealthTimer = CAR_DATA.lamborghini.abilityDuration;
+      showToast('🫥 اختفى صديقك تماماً مؤقتاً!');
+    } else if (car === 'mercedes') {
+      explodeCarPhysically(true, 45);
+      explodeCarPhysically(false, 0);
+      showToast('💥 صديقك فجّر سيارتكما في الهواء!');
+    }
+  }
+
+  // ============ صوت انفجار مدوٍ (WebAudio — ضجيج + هبوط حاد) ============
+  function playExplosionSound() {
+    if (!audioCtx || muted) return;
+    try {
+      const dur = 1.5;
+      const buf = audioCtx.createBuffer(1, Math.floor(audioCtx.sampleRate * dur), audioCtx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2.1);
+      const src = audioCtx.createBufferSource(); src.buffer = buf;
+      const filt = audioCtx.createBiquadFilter(); filt.type = 'lowpass';
+      filt.frequency.setValueAtTime(3200, audioCtx.currentTime);
+      filt.frequency.exponentialRampToValueAtTime(70, audioCtx.currentTime + dur);
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(1.0, audioCtx.currentTime); // انفجار عالي جداً
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+      src.connect(filt); filt.connect(g); g.connect(audioCtx.destination);
+      src.start();
+      // دفّة باس إضافية لإحساس الانفجار
+      const osc = audioCtx.createOscillator(); osc.type = 'sine';
+      osc.frequency.setValueAtTime(90, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(28, audioCtx.currentTime + 0.7);
+      const g2 = audioCtx.createGain();
+      g2.gain.setValueAtTime(0.9, audioCtx.currentTime);
+      g2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+      osc.connect(g2); g2.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.85);
+    } catch (e) {}
+  }
+
+  // ============ شريط صحة فوق السيارة (Sprite يواجه الكاميرا) ============
+  function makeHealthBar() {
+    const bg = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x10151f, depthTest: true }));
+    bg.scale.set(3.4, 0.46, 1);
+    const fg = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x00ff88, depthTest: true }));
+    fg.scale.set(3.1, 0.3, 1);
+    const grp = new THREE.Group();
+    grp.add(bg); grp.add(fg);
+    return {
+      group: grp,
+      update(pct) {
+        pct = Math.max(0, Math.min(100, pct));
+        fg.scale.x = 3.1 * (pct / 100);
+        fg.position.x = -1.55 * (1 - pct / 100);
+        fg.material.color.setHex(pct > 55 ? 0x00ff88 : pct > 25 ? 0xffcc33 : 0xff3355);
+      }
+    };
+  }
+
+  // ============ انفجار فيزيائي: السيارة تُقذف في الهواء وتدور ثم تعود للحياة ============
+  function explodeCarPhysically(mine, forceDmg) {
+    const carObj = mine ? myCar : remoteCar;
+    if (!carObj) return;
+    if (mine && myExplode) return;
+    if (!mine && remoteExplode) return;
+    const px = mine ? myCar.x : remoteCar.mesh.position.x;
+    const pz = mine ? myCar.z : remoteCar.mesh.position.z;
+    const py = mine ? myCar.y : remoteCar.mesh.position.y;
+    triggerExplosionEffect(px, pz, py);
+    playExplosionSound();
+    camShake = 1.0;
+    const ang = Math.random() * Math.PI * 2;
+    const power = 1 + Math.random() * 0.5;
+    const state = {
+      vx: Math.cos(ang) * 9.5 * power,
+      vy: 13.5 * power,
+      vz: Math.sin(ang) * 9.5 * power,
+      srx: (Math.random() - 0.5) * 9,
+      sry: (Math.random() - 0.5) * 7,
+      srz: (Math.random() - 0.5) * 9,
+      t: 0
+    };
+    if (mine) {
+      myExplode = state;
+      myCar.speed = 0;
+      if (forceDmg) {
+        myHealth = Math.max(1, myHealth - forceDmg); // قدرة مرسيدس لا تقتل وحدها
+        updateHealthUI();
+      }
+    } else {
+      remoteExplode = state;
+    }
+  }
+
+  // تلف السيارة حسب قوة الاصطدام (سرعة ما قبل الاصطدام)
+  function damageMyCar(speedBefore) {
+    if (myExplode || !gameActive) return;
+    if (speedBefore < 5) return; // اصطدامات خفيفة جداً لا تضر
+    const dmg = speedBefore * 1.15;
+    myHealth = Math.max(0, myHealth - dmg);
+    updateHealthUI();
+    if (myHealth <= 0) explodeCarPhysically(true, 0); // انفجار فيزيائي كامل + إعادة إحياء
+  }
+
+  function respawnMyCar() {
+    myHealth = MAX_HEALTH;
+    updateHealthUI();
+    myCar.x = isHost ? -15 : 15;
+    myCar.z = 0; myCar.y = 0;
+    myCar.angle = isHost ? 0 : Math.PI;
+    myCar.speed = 0; myCar.pitch = 0; myCar.roll = 0; myCar.steerAngle = 0;
+    myCar.mesh.rotation.set(0, myCar.angle, 0);
+    myCar.mesh.position.set(myCar.x, 0, myCar.z);
+    showToast('🔧 تم إصلاح سيارتك وإعادتها للحياة!');
+  }
+
+  // تحديث واجهة الصحة (HUD + شريط فوق السيارة)
+  function updateHealthUI() {
+    if (UI.healthBar) {
+      const pct = Math.max(0, Math.min(100, myHealth));
+      UI.healthBar.style.width = pct + '%';
+      UI.healthBar.style.background = pct > 55 ? 'linear-gradient(90deg,#00ff88,#7dd87d)'
+        : pct > 25 ? 'linear-gradient(90deg,#ffd75e,#ffaa00)' : 'linear-gradient(90deg,#ff3355,#ff8833)';
+      UI.healthText.innerText = Math.round(pct);
+    }
+    if (UI.remoteHealthText) UI.remoteHealthText.innerText = Math.round(Math.max(0, remoteHealth));
+    if (myHealthBar) myHealthBar.update(myHealth);
+    if (remoteHealthBar) remoteHealthBar.update(remoteHealth);
+  }
+
+  // انفجار مرئي في كل الاتجاهات (يستخدم مجمّع الجسيمات نفسه)
+  function triggerExplosionEffect(x, z, y) {
+    const flash = document.getElementById('explosionFlash');
+    flash.classList.remove('show'); void flash.offsetWidth; flash.classList.add('show');
+    for (let i = 0; i < 16; i++) {
+      let p = null;
+      for (let k = 0; k < MAX_PARTICLES; k++) {
+        const cand = particlePool[(particleCursor + k) % MAX_PARTICLES];
+        if (cand.life <= 0) { p = cand; particleCursor = (particleCursor + k + 1) % MAX_PARTICLES; break; }
+      }
+      if (!p) break;
+      const ang = Math.random() * Math.PI * 2;
+      const dist = 0.5 + Math.random() * 2.2;
+      p.maxLife = 0.55 + Math.random() * 0.3;
+      p.life = p.maxLife;
+      p.mesh.visible = true;
+      p.mesh.material.color.setHex(Math.random() > 0.5 ? 0xff3300 : 0xffaa00);
+      p.mesh.material.opacity = 1;
+      p.mesh.scale.setScalar(1.1 + Math.random() * 1.1);
+      p.mesh.position.set(x + Math.cos(ang) * dist, y + 1 + Math.random() * 1.5, z + Math.sin(ang) * dist);
+    }
+  }
+
   function startGame(hosting) {
     document.getElementById('menu').style.display = 'none';
     document.getElementById('hud').style.display = 'block';
@@ -894,22 +1787,36 @@
     document.getElementById('boostContainer').style.display = 'block';
 
     if (!scene) init3D();
+    if (manualQualityChosen) applyQuality(manualQualityLevel);
     initAudio();
 
-    const my = createRealCar(hosting ? 0x00ff88 : 0x00ccff);
+    const myCarInfo = CAR_DATA[selectedCarType] || { color: hosting ? 0x00ff88 : 0x00ccff };
+    const rmCarInfo = CAR_DATA[remoteCarType] || { color: hosting ? 0x00ccff : 0x00ff88 };
+
+    const my = createRealCar(myCarInfo.color, selectedCarType);
+    my.mesh.rotation.order = 'YXZ';
     myCar = {
       mesh: my.mesh, wheels: my.wheels,
-      x: hosting ? -15 : 15, z: 0, angle: hosting ? 0 : Math.PI,
-      speed: 0, pitch: 0, roll: 0, score: 0
+      x: hosting ? -15 : 15, z: 0, y: 0, angle: hosting ? 0 : Math.PI,
+      speed: 0, pitch: 0, roll: 0, score: 0, steerAngle: 0
     };
 
-    const rm = createRealCar(hosting ? 0x00ccff : 0x00ff88);
+    const rm = createRealCar(rmCarInfo.color, remoteCarType);
+    rm.mesh.rotation.order = 'YXZ';
     remoteCar = {
       mesh: rm.mesh,
       x: hosting ? 15 : -15, z: 0, angle: hosting ? Math.PI : 0,
       tx: hosting ? 15 : -15, tz: 0, tangle: hosting ? Math.PI : 0,
       troll: 0, tpitch: 0, score: 0
     };
+
+    myHealthBar = makeHealthBar();
+    myHealthBar.group.position.y = 3.2;
+    myCar.mesh.add(myHealthBar.group);
+    remoteHealthBar = makeHealthBar();
+    remoteHealthBar.group.position.y = 3.2;
+    remoteCar.mesh.add(remoteHealthBar.group);
+    updateHealthUI();
 
     flagState = 0;
     flagPos = { x: 0, z: 0 };
@@ -920,6 +1827,28 @@
     matchTime = MATCH_TIME;
     UI.timer.className = '';
     UI.timer.innerText = formatTime(matchTime);
+
+    // إعادة ضبط القدرات الخاصة
+    abilityCooldown = 0;
+    remoteStealthTimer = 0;
+    stealthSelfTimer = 0;
+    myExplode = null;
+    remoteExplode = null;
+    myHealth = MAX_HEALTH;
+    remoteHealth = MAX_HEALTH;
+    camShake = 0;
+    updateHealthUI();
+    abilityCdVisual = false;
+    remoteCar.mesh.visible = true;
+    const selCar = CAR_DATA[selectedCarType];
+    if (selCar && selCar.abilityType !== 'speed' && selCar.abilityIcon) {
+      UI.specialIcon.innerText = selCar.abilityIcon;
+      UI.specialText.innerText = selCar.abilityLabel;
+      document.getElementById('specialContainer').style.display = 'block';
+      UI.specialBtn.classList.remove('cooldown');
+    } else {
+      document.getElementById('specialContainer').style.display = 'none';
+    }
 
     gameActive = true;
     lastTime = performance.now();
@@ -1027,6 +1956,7 @@
       if (px > 0 && pz > 0) {
         if (px < pz) myCar.x += Math.sign(dx || 1) * px;
         else myCar.z += Math.sign(dz || 1) * pz;
+        damageMyCar(Math.abs(myCar.speed));
         myCar.speed *= 0.55;
       }
     }
@@ -1039,6 +1969,7 @@
         const d = Math.sqrt(d2);
         myCar.x += (dx / d) * (min - d);
         myCar.z += (dz / d) * (min - d);
+        damageMyCar(Math.abs(myCar.speed));
         myCar.speed *= 0.55;
       }
     }
@@ -1052,6 +1983,7 @@
     document.getElementById('hud').style.display = 'none';
     UI.timer.style.display = 'none';
     document.getElementById('boostContainer').style.display = 'none';
+    document.getElementById('specialContainer').style.display = 'none';
 
     const myScore = myCar.score, oppScore = remoteCar.score;
     const diff = myScore - oppScore;
@@ -1065,7 +1997,7 @@
 
     document.getElementById('endTitle').innerText = title;
     document.getElementById('endStats').innerHTML =
-      `<b>مدة المباراة:</b> 5 دقائق<br>` +
+      `<b>مدة المباراة:</b> ${formatTime(MATCH_TIME)}<br>` +
       `<b>مدة حملك للعلم:</b> ${myScore.toFixed(1)} ثانية<br>` +
       `<b>مدة حمل صديقك:</b> ${oppScore.toFixed(1)} ثانية`;
   }
@@ -1087,10 +2019,13 @@
     if (fpsTime >= 1) {
       currentFPS = Math.round(fpsFrames / fpsTime);
       UI.fps.innerText = currentFPS + ' FPS';
-      if (currentFPS < 48 && qualityLevel > 0 && now - lastQualityChange > 4000) {
-        applyQuality(qualityLevel - 1); lastQualityChange = now;
-      } else if (currentFPS > 57 && qualityLevel < 3 && now - lastQualityChange > 10000) {
-        applyQuality(qualityLevel + 1); lastQualityChange = now;
+      // إن اختار اللاعب الجودة يدوياً من الإعدادات، لا نُغيّرها تلقائياً
+      if (!manualQualityChosen) {
+        if (currentFPS < 48 && qualityLevel > 0 && now - lastQualityChange > 4000) {
+          applyQuality(qualityLevel - 1); lastQualityChange = now;
+        } else if (currentFPS > 57 && qualityLevel < 3 && now - lastQualityChange > 10000) {
+          applyQuality(qualityLevel + 1); lastQualityChange = now;
+        }
       }
       fpsFrames = 0; fpsTime = 0;
     }
@@ -1105,7 +2040,7 @@
     if (boostActive) {
       boostTimer -= dt;
       boostEmitAcc += dt;
-      if (boostEmitAcc >= 0.045) { boostEmitAcc = 0; triggerBoostParticles(myCar.x, myCar.z, myCar.angle, 2); }
+      if (boostEmitAcc >= 0.045) { boostEmitAcc = 0; triggerBoostParticles(myCar.x, myCar.z, myCar.y, myCar.angle, 2); }
       if (boostTimer <= 0) boostActive = false;
     }
 
@@ -1121,25 +2056,79 @@
       lastBoostLabel = "BOOST";
     }
 
+    // ===== القدرة الخاصة (اختفاء / انفجار) =====
+    if (abilityCooldown > 0) {
+      abilityCooldown -= dt;
+      if (!abilityCdVisual) { UI.specialBtn.classList.add('cooldown'); abilityCdVisual = true; }
+      UI.specialText.innerText = `${Math.max(0, Math.ceil(abilityCooldown))}ث`;
+      if (abilityCooldown <= 0) {
+        UI.specialBtn.classList.remove('cooldown');
+        UI.specialText.innerText = CAR_DATA[selectedCarType] ? CAR_DATA[selectedCarType].abilityLabel : '';
+        abilityCdVisual = false;
+      }
+    }
+    // اختفاء سيارة الصديق عندي (هو فعّل قدرة Lamborghini) — تختفي تماماً، بدون أي شفافية
+    if (remoteStealthTimer > 0) {
+      remoteStealthTimer -= dt;
+      remoteCar.mesh.visible = false;
+      if (remoteStealthTimer <= 0) remoteCar.mesh.visible = true;
+    }
+    // سيارتي أنا وأنا مفعّل قدرة Lamborghini: تبقى شبه شفافة عندي فقط (شكل شبح)
+    if (stealthSelfTimer > 0) {
+      stealthSelfTimer -= dt;
+      if (stealthSelfTimer <= 0) setCarTransparency(myCar.mesh, false);
+    }
+
     updateParticles(dt);
     updateTraffic(dt);
     updateEngineSound();
 
+    // ===== فيزياء انفجار سيارتي: قذف في الهواء + دوران + ارتداد + إحياء =====
+    if (myExplode) {
+      myExplode.t += dt;
+      myExplode.vy -= 26 * dt;
+      myCar.x += myExplode.vx * dt;
+      myCar.z += myExplode.vz * dt;
+      myCar.y += myExplode.vy * dt;
+      if (myCar.y < 0) {
+        myCar.y = 0;
+        myExplode.vy = Math.abs(myExplode.vy) * 0.35;
+        myExplode.vx *= 0.55; myExplode.vz *= 0.55;
+        myExplode.srx *= 0.6; myExplode.srz *= 0.6;
+        triggerBoostParticles(myCar.x, myCar.z, 0, myCar.angle, 2);
+      }
+      myCar.mesh.position.set(myCar.x, myCar.y, myCar.z);
+      myCar.mesh.rotation.x += myExplode.srx * dt;
+      myCar.mesh.rotation.y += myExplode.sry * dt;
+      myCar.mesh.rotation.z += myExplode.srz * dt;
+      myCar.speed = 0;
+      if (myHealthBar) myHealthBar.group.visible = false;
+      if (myExplode.t > 2.6) { myExplode = null; respawnMyCar(); }
+    } else if (myHealthBar) {
+      myHealthBar.group.visible = true;
+    }
+
     // ===== فيزياء القيادة =====
-    const maxSpeedNormal = 58;
-    const maxSpeedBoost = 95;
+    const jetourFactor = (selectedCarType === 'jetour') ? 1.12 : 1; // قدرة Jetour الدائمة: سرعة أعلى قليلاً
+    const maxSpeedNormal = 58 * jetourFactor;
+    const maxSpeedBoost = 95 * jetourFactor;
     const currentMax = boostActive ? maxSpeedBoost : maxSpeedNormal;
     const speedRatio = Math.min(Math.abs(myCar.speed) / maxSpeedNormal, 1);
+    const stunned = !!myExplode; // متوقف أثناء الانفجار الفيزيائي (قذف في الهواء)
 
-    if (keys.up) myCar.speed += (boostActive ? 95 : 46) * (1 - speedRatio * 0.55) * dt;
-    if (keys.down) myCar.speed -= (myCar.speed > 0 ? 85 : 42) * dt;
-    myCar.speed -= myCar.speed * (keys.up ? 0.25 : 1.4) * dt;
+    if (!stunned) {
+      if (keys.up) myCar.speed += (boostActive ? 95 : 46) * (1 - speedRatio * 0.55) * dt;
+      if (keys.down) myCar.speed -= (myCar.speed > 0 ? 85 : 42) * dt;
+      myCar.speed -= myCar.speed * (keys.up ? 0.25 : 1.4) * dt;
+    } else {
+      myCar.speed -= myCar.speed * 3.2 * dt;
+    }
     if (Math.abs(myCar.speed) < 0.15 && !keys.up && !keys.down) myCar.speed = 0;
     if (myCar.speed > currentMax) myCar.speed = currentMax;
     if (myCar.speed < -maxSpeedNormal / 2) myCar.speed = -maxSpeedNormal / 2;
 
     let steerDir = 0;
-    if (Math.abs(myCar.speed) > 0.4) {
+    if (!stunned && Math.abs(myCar.speed) > 0.4) {
       const dir = myCar.speed > 0 ? 1 : -1;
       const turnRate = 2.9 * (1 - speedRatio * 0.55);
       if (keys.left) { myCar.angle += turnRate * dt * dir; steerDir = 1; }
@@ -1156,38 +2145,79 @@
     myCar.x = Math.max(-300, Math.min(300, myCar.x));
     myCar.z = Math.max(-300, Math.min(300, myCar.z));
 
-    resolveCollisions();
+    if (!myExplode) resolveCollisions();
 
-    myCar.mesh.position.set(myCar.x, 0, myCar.z);
-    myCar.mesh.rotation.y = myCar.angle;
-    myCar.mesh.rotation.z = myCar.roll;
-    myCar.mesh.rotation.x = myCar.pitch;
+    // ===== ارتفاع الأرض (المنحدر) + ميلان السيارة مع سطح الطريق =====
+    const hHere = rampHeightAt(myCar.x, myCar.z);
+    let targetY = 0;
+    if (hHere - myCar.y <= 2.5) targetY = hHere;   // تحت السطح المستوٍ = مرور تحت الجسر
+    if (!myExplode) myCar.y += (targetY - myCar.y) * Math.min(1, dt * 11);
+
+    let slopePitch = 0;
+    if (hHere - myCar.y <= 2.5) {
+      const fx = Math.sin(myCar.angle), fz = Math.cos(myCar.angle);
+      const hF = rampHeightAt(myCar.x + fx * 1.9, myCar.z + fz * 1.9);
+      const hB = rampHeightAt(myCar.x - fx * 1.9, myCar.z - fz * 1.9);
+      slopePitch = Math.atan2(hB - hF, 3.8);
+    }
+
+    if (!myExplode) {
+      myCar.mesh.position.set(myCar.x, myCar.y, myCar.z);
+      myCar.mesh.rotation.y = myCar.angle;
+      myCar.mesh.rotation.z = myCar.roll;
+      myCar.mesh.rotation.x = myCar.pitch + slopePitch;
+    }
 
     const wheelSpin = (myCar.speed * dt) / 0.52;
-    const steerAngle = steerDir * 0.45;
+    myCar.steerAngle += (steerDir * 0.45 - myCar.steerAngle) * Math.min(1, dt * 10);
     for (let i = 0; i < myCar.wheels.length; i++) {
       const w = myCar.wheels[i];
       const ch = w.group.children;
       for (let j = 0; j < ch.length; j++) ch[j].rotation.x += wheelSpin;
-      if (w.front) w.group.rotation.y = steerAngle;
+      if (w.front) w.group.rotation.y = myCar.steerAngle;
     }
 
     // ===== تنعيم سيارة الخصم =====
-    const k = 1 - Math.exp(-12 * dt);
-    remoteCar.mesh.position.x += (remoteCar.tx - remoteCar.mesh.position.x) * k;
-    remoteCar.mesh.position.z += (remoteCar.tz - remoteCar.mesh.position.z) * k;
-    remoteCar.mesh.rotation.y = lerpAngle(remoteCar.mesh.rotation.y, remoteCar.tangle, k);
-    remoteCar.mesh.rotation.z += (remoteCar.troll - remoteCar.mesh.rotation.z) * k;
-    remoteCar.mesh.rotation.x += (remoteCar.tpitch - remoteCar.mesh.rotation.x) * k;
+    if (remoteExplode) {
+      // انفجار فيزيائي لسيارة الصديق عندي: قذف ودوران ثم العودة لتتبع الشبكة
+      remoteExplode.t += dt;
+      remoteExplode.vy -= 26 * dt;
+      const rm = remoteCar.mesh;
+      rm.position.x += remoteExplode.vx * dt;
+      rm.position.z += remoteExplode.vz * dt;
+      rm.position.y += remoteExplode.vy * dt;
+      if (rm.position.y < 0) {
+        rm.position.y = 0;
+        remoteExplode.vy = Math.abs(remoteExplode.vy) * 0.35;
+        remoteExplode.vx *= 0.55; remoteExplode.vz *= 0.55;
+        remoteExplode.srx *= 0.6; remoteExplode.srz *= 0.6;
+      }
+      rm.rotation.x += remoteExplode.srx * dt;
+      rm.rotation.y += remoteExplode.sry * dt;
+      rm.rotation.z += remoteExplode.srz * dt;
+      if (remoteHealthBar) remoteHealthBar.group.visible = false;
+      if (remoteExplode.t > 2.6) { remoteExplode = null; }
+    } else {
+      const k = 1 - Math.exp(-12 * dt);
+      remoteCar.mesh.position.x += (remoteCar.tx - remoteCar.mesh.position.x) * k;
+      remoteCar.mesh.position.z += (remoteCar.tz - remoteCar.mesh.position.z) * k;
+      const rgh = rampHeightAt(remoteCar.mesh.position.x, remoteCar.mesh.position.z);
+      remoteCar.mesh.position.y += (rgh - remoteCar.mesh.position.y) * Math.min(1, dt * 11);
+      remoteCar.mesh.rotation.y = lerpAngle(remoteCar.mesh.rotation.y, remoteCar.tangle, k);
+      remoteCar.mesh.rotation.z += (remoteCar.troll - remoteCar.mesh.rotation.z) * k;
+      remoteCar.mesh.rotation.x += (remoteCar.tpitch - remoteCar.mesh.rotation.x) * k;
+      if (remoteHealthBar) remoteHealthBar.group.visible = true;
+    }
 
     // ===== إرسال مُخنق 15 مرة/ثانية =====
     if (conn && conn.open && now - lastSent > 66) {
       lastSent = now;
       conn.send({
         type: 'sync',
-        x: myCar.x, z: myCar.z, angle: myCar.angle,
+        x: myCar.x, z: myCar.z, y: myCar.y, angle: myCar.angle,
         roll: myCar.roll, pitch: myCar.pitch,
         score: myCar.score,
+        hp: myHealth,
         flagState: flagState, flagPos: flagPos,
         matchTime: matchTime,
         isBoosting: boostActive
@@ -1203,8 +2233,16 @@
     const targetCamZ = myCar.z - Math.cos(myCar.angle) * camDist;
     camera.position.x += (targetCamX - camera.position.x) * Math.min(1, dt * 7);
     camera.position.z += (targetCamZ - camera.position.z) * Math.min(1, dt * 7);
-    camera.position.y = 4.8 + speedRatio * 1.6 + (boostActive ? 1.2 : 0);
-    camera.lookAt(myCar.x, 1.4, myCar.z);
+    camera.position.y = 4.8 + speedRatio * 1.6 + (boostActive ? 1.2 : 0) + myCar.y * 0.85;
+    camera.lookAt(myCar.x, 1.4 + myCar.y, myCar.z);
+
+    // اهتزاز الكاميرا بعد الانفجار
+    if (camShake > 0) {
+      camShake = Math.max(0, camShake - dt * 1.4);
+      camera.position.x += (Math.random() - 0.5) * camShake * 1.8;
+      camera.position.y += (Math.random() - 0.5) * camShake * 1.8;
+      camera.position.z += (Math.random() - 0.5) * camShake * 1.8;
+    }
 
     sun.position.set(myCar.x + 80, 140, myCar.z + 60);
     sun.target.position.set(myCar.x, 0, myCar.z);
@@ -1214,19 +2252,32 @@
       const myDist = Math.hypot(myCar.x - flagPos.x, myCar.z - flagPos.z);
       const remoteDist = Math.hypot(remoteCar.mesh.position.x - flagPos.x, remoteCar.mesh.position.z - flagPos.z);
 
+      // إسقاط العلم على الأرض إذا انفجر حامله
+      if (myExplode && flagState === 1) {
+        flagState = 0;
+        flagPos = { x: myCar.x, z: myCar.z };
+        flagCooldown = 2;
+        updateFlagMeshPosition();
+      } else if (remoteExplode && flagState === 2) {
+        flagState = 0;
+        flagPos = { x: remoteCar.mesh.position.x, z: remoteCar.mesh.position.z };
+        flagCooldown = 2;
+        updateFlagMeshPosition();
+      }
+
       if (flagState === 0) {
-        if (myDist < 4.5) {
+        if (!myExplode && !remoteExplode && myDist < 4.5) {
           flagState = 1;
           showToast("🚩 التقطت العلم من الأرض!");
           updateFlagMeshPosition();
-        } else if (remoteDist < 4.5) {
+        } else if (!myExplode && !remoteExplode && remoteDist < 4.5) {
           flagState = 2;
           showToast("🚨 صديقك التقط العلم من الأرض!");
           updateFlagMeshPosition();
         }
       } else if (flagCooldown <= 0) {
         const distCars = Math.hypot(myCar.x - remoteCar.mesh.position.x, myCar.z - remoteCar.mesh.position.z);
-        if (distCars < 4.5) {
+        if (distCars < 4.5 && !myExplode && !remoteExplode) {
           if (flagState === 1) { flagState = 2; flagCooldown = 2.5; showToast("💥 صديقك صدمك وانتزع منك العلم!"); }
           else if (flagState === 2) { flagState = 1; flagCooldown = 2.5; showToast("🚨 صدمت صديقك وانتزعت العلم منه!"); }
           updateFlagMeshPosition();
@@ -1247,6 +2298,7 @@
       hudAcc = 0;
       UI.score.innerText = `🏆 نقاطك: ${Math.floor(myCar.score)}ث`;
       UI.speed.innerText = `🏎️ ${Math.round(Math.abs(myCar.speed) * 3.6)} كم/س`;
+      updateHealthUI();
     }
 
     // المؤقّت: تحديث عند تغيّر النص فقط (مرة كل ثانية)
