@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🚩 صائد الأعلام 3D Pro — مدينة ليلية واقعية</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { width:100%; height:100%; overflow:hidden; font-family:'Segoe UI', Tahoma, Arial, sans-serif; background:#04060c; color:#fff; }
+  canvas { display:block; width:100vw; height:100vh; }
+
+  #menu {
+    position:fixed; inset:0; z-index:50; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:16px; padding:20px;
+    background: radial-gradient(circle at 50% 30%, #101c33 0%, #04060c 75%);
+    text-align:center; overflow-y:auto;
+  }
+  #menu h1 { font-size:clamp(28px,5vw,50px); text-shadow:0 0 25px rgba(255,51,85,0.8), 0 4px 0 #000; }
+  #menu .sub { color:#8ea7cb; font-size:clamp(12px,2.2vw,15px); max-width:560px; line-height:1.7; }
+
+  #loginBox { display:flex; flex-direction:column; gap:12px; width:min(380px,92vw); margin-top:6px; }
+  #nameInput, #joinCodeInput {
+    padding:14px 18px; border-radius:12px; border:2px solid #233759; background:#0a1326; color:#fff;
+    font-size:17px; text-align:center; outline:none; transition:.2s; width:100%;
+  }
+  #nameInput:focus, #joinCodeInput:focus { border-color:#ff3355; box-shadow:0 0 18px rgba(255,51,85,0.4); }
+
+  .menu-btn {
+    padding:14px; border:none; border-radius:12px; font-size:17px; font-weight:bold; cursor:pointer;
+    transition:.2s; color:#fff; box-shadow:0 4px 15px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  #btnCreateRoom { background:linear-gradient(135deg, #1e52f0, #00c6ff); }
+  #btnJoin { background:linear-gradient(135deg, #00b09b, #96c93d); width:140px; }
+  .menu-btn:hover { filter:brightness(1.15); transform:translateY(-2px); }
+  .menu-btn:active { transform:translateY(1px); }
+
+  #roomCodeDisplay {
+    font-size:22px; font-weight:bold; color:#ffd75e; background:rgba(0,0,0,0.6);
+    padding:12px; border-radius:12px; border:2px dashed #ffd75e; letter-spacing:3px; display:none;
+  }
+  #joinSection { display:flex; gap:8px; align-items:center; }
+  #loginError { color:#ff5252; min-height:22px; font-size:14px; font-weight:bold; }
+  .controls-guide { background:rgba(255,255,255,0.05); padding:12px 18px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); font-size:13px; color:#a2b9db; line-height:1.8; }
+
+  #hud { position:fixed; top:0; left:0; right:0; z-index:20; display:none; pointer-events:none; padding:15px; }
+  .hud-row { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap; }
+  .hud-card {
+    background:rgba(8,14,28,0.85); border:1px solid rgba(255,255,255,0.18); color:#fff;
+    border-radius:14px; padding:8px 16px; font-size:14px; backdrop-filter:blur(8px);
+    box-shadow:0 8px 20px rgba(0,0,0,0.4);
+  }
+  #flagStatus.ground { border-color:#ffd75e; box-shadow:0 0 15px rgba(255,215,94,0.5); color:#ffd75e; }
+  #flagStatus.you { border-color:#00ff88; box-shadow:0 0 15px rgba(0,255,136,0.6); color:#00ff88; font-weight:bold; }
+  #flagStatus.enemy { border-color:#ff3355; box-shadow:0 0 15px rgba(255,51,85,0.6); color:#ff3355; font-weight:bold; }
+  #fpsBox { color:#7dd87d; font-family:monospace; }
+  #soundBtn { pointer-events:auto; cursor:pointer; }
+
+  #bigTimer {
+    position:fixed; top:70px; left:50%; transform:translateX(-50%); z-index:20; display:none;
+    font-size:clamp(30px,6vw,50px); font-weight:800; color:#fff; text-shadow:0 0 20px #00ff88, 0 3px 0 #000;
+    pointer-events:none; letter-spacing:2px; font-variant-numeric:tabular-nums;
+    transition:color .3s, text-shadow .3s;
+  }
+  #bigTimer.warn { color:#ffd75e; text-shadow:0 0 20px #ffaa00, 0 3px 0 #000; }
+  #bigTimer.danger { color:#ff4466; text-shadow:0 0 26px #ff2244, 0 3px 0 #000; animation:pulseT .9s infinite; }
+  @keyframes pulseT { 0%,100%{ transform:translateX(-50%) scale(1);} 50%{ transform:translateX(-50%) scale(1.08);} }
+
+  #toast {
+    position:fixed; top:28%; left:50%; transform:translate(-50%,-50%); z-index:25; display:none;
+    background:rgba(8,14,28,0.95); color:#ffd75e; padding:14px 28px; border-radius:16px; font-size:20px;
+    border:2px solid #ffd75e; pointer-events:none; box-shadow:0 0 30px rgba(255,215,94,0.4); text-align:center;
+  }
+
+  #boostContainer { position:fixed; bottom:115px; right:25px; z-index:35; display:none; pointer-events:auto; }
+  #boostBtn {
+    width:95px; height:95px; border-radius:50%; border:3px solid #ff9900;
+    background:radial-gradient(circle, #ff5500 0%, #a82400 100%); color:#fff;
+    font-size:16px; font-weight:900; cursor:pointer; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; box-shadow:0 0 25px rgba(255,85,0,0.6), inset 0 2px 5px rgba(255,255,255,0.5);
+    transition:.15s; user-select:none; touch-action:none;
+  }
+  #boostBtn:active:not(.cooldown) { transform:scale(0.92); filter:brightness(1.2); }
+  #boostBtn.cooldown { background:#222a38; border-color:#445566; color:#778899; box-shadow:none; cursor:not-allowed; opacity:0.75; }
+  #boostIcon { font-size:26px; line-height:1; }
+  #boostText { font-size:12px; margin-top:2px; font-weight:bold; }
+
+  #touchControls { position:fixed; bottom:0; left:0; right:0; z-index:30; display:none; justify-content:space-between; padding:20px; pointer-events:none; }
+  .tc-group { display:flex; gap:14px; pointer-events:auto; }
+  .tc-btn {
+    width:72px; height:72px; border-radius:50%; border:2px solid rgba(255,255,255,0.3);
+    background:rgba(10,16,30,0.75); color:#fff; font-size:28px; user-select:none; touch-action:none;
+    display:flex; align-items:center; justify-content:center; backdrop-filter:blur(5px);
+  }
+  .tc-btn:active, .tc-btn.on { background:rgba(255,51,85,0.85); border-color:#fff; }
+  @media (pointer:coarse) { #touchControls { display:flex; } }
+
+  #endScreen {
+    position:fixed; inset:0; z-index:60; display:none; flex-direction:column; align-items:center;
+    justify-content:center; gap:20px; background:rgba(4,6,12,0.95); color:#fff; text-align:center; padding:20px;
+  }
+  #endScreen h1 { font-size:clamp(36px,8vw,64px); }
+  #endScreen.win h1 { color:#00ff88; text-shadow:0 0 35px #00ff88; }
+  #endScreen.lose h1 { color:#ff3355; text-shadow:0 0 35px #ff3355; }
+  #endScreen.draw h1 { color:#ffd75e; text-shadow:0 0 35px #ffd75e; }
+  #endStats { font-size:20px; color:#cfe3ff; line-height:2.2; }
+  #againBtn {
+    padding:16px 48px; font-size:20px; font-weight:bold; border:none; border-radius:14px; cursor:pointer;
+    background:linear-gradient(135deg,#ff3355,#ff8833); color:#fff; box-shadow:0 5px 25px rgba(255,51,85,0.5); transition:.2s;
+  }
+  #againBtn:hover { transform:scale(1.05); }
+</style>
+</head>
+<body>
+
+<div id="menu">
+  <h1>🚩 صائد الأعلام 3D Pro</h1>
+  <p class="sub">مدينة ليلية واقعية: ناطحات سحاب مضيئة، شبكة طرق منظمة، كباري متعددة المستويات، إضاءة شوارع، ومرور حي! التقط العلم واحتفظ به 5 دقائق 🏙️</p>
+
+  <div id="loginBox">
+    <input id="nameInput" placeholder="✍️ أدخل اسمك هنا..." maxlength="15" autocomplete="off" value="Kareem">
+    <button class="menu-btn" id="btnCreateRoom">🏠 إنشاء غرفة جديدة (Host)</button>
+    <div id="roomCodeDisplay"></div>
+    <div id="joinSection">
+      <input id="joinCodeInput" placeholder="أدخل كود صديقك (4 أرقام)" maxlength="4">
+      <button class="menu-btn" id="btnJoin">انضمام 🎮</button>
+    </div>
+    <p id="loginError"></p>
+  </div>
+
+  <div class="controls-guide">
+    🕹️ <b>التحكم:</b> الأسهم أو WASD للقيادة | <b>[Space] أو زر BOOST</b> للانطلاق السريع (كل 5 ثوانٍ)<br>
+    ⏱️ <b>مدة المباراة: 5 دقائق</b> — من يحمل العلم أطول وقت يفوز! | 💥 اصطدم بصديقك لسرقة العلم
+  </div>
+</div>
+
+<div id="hud">
+  <div class="hud-row">
+    <div class="hud-card" id="flagStatus">🚩 العلم: على الأرض</div>
+    <div class="hud-card" id="scoreBoard">🏆 نقاطك: 0ث</div>
+  </div>
+  <div class="hud-row" style="margin-top:8px;">
+    <div class="hud-card" id="speedBox">🏎️ 0 كم/س</div>
+    <div style="display:flex; gap:8px;">
+      <div class="hud-card" id="fpsBox">60 FPS</div>
+      <div class="hud-card" id="soundBtn">🔊</div>
+    </div>
+  </div>
+</div>
+
+<div id="bigTimer">05:00</div>
+<div id="toast"></div>
+
+<div id="boostContainer">
+  <div id="boostBtn">
+    <span id="boostIcon">🚀</span>
+    <span id="boostText">BOOST</span>
+  </div>
+</div>
+
+<div id="touchControls">
+  <div class="tc-group">
+    <div class="tc-btn" id="btnRight">➡️</div>
+    <div class="tc-btn" id="btnLeft">⬅️</div>
+  </div>
+  <div class="tc-group">
+    <div class="tc-btn" id="btnBrake">⛔</div>
+    <div class="tc-btn" id="btnGas">⬆️</div>
+  </div>
+</div>
+
+<div id="endScreen">
+  <h1 id="endTitle"></h1>
+  <p id="endStats"></p>
+  <button id="againBtn">🔄 اللعب مجدداً</button>
+</div>
+
+<script>
+  let playerName = "Kareem";
+  let gameActive = false;
+
+  // ====== مدة المباراة: 5 دقائق ======
+  const MATCH_TIME = 300;        // 300 ثانية = 5 دقائق
+  let matchTime = MATCH_TIME;
+
+  // الشبكة (PeerJS)
+  let peer = null, conn = null, 
+   = false;
+  let lastSent = 0;
+
+  // Three.js
+  let scene, camera, renderer, sun;
+  let myCar, remoteCar;
+  let flagMesh, flagRingMesh;
+  let flagState = 0;
+  let flagPos = { x: 0, z: 0 };
+  let flagCooldown = 0;
+  let flagAttachedTo = 'none';   // none | me | remote
+
+  let boostActive = false, boostTimer = 0, boostCooldown = 0;
+  let boostEmitAcc = 0;
+  const keys = { up: false, down: false, left: false, right: false, space: false };
+
+  // بيانات التصادم والمدينة
+  let boxColliders = [];
+  let circleColliders = [];
+  let traffic = [];
+  let trafficBodyMesh, trafficCabinMesh;
+  const TRAFFIC_COUNT = 14;
+
+  // عجلات سيارتي
+  let myWheels = [], steerWheels = [];
+
+  // إدارة الأداء التلقائي (60 FPS) — يعتمد على دقة البكسل فقط الآن
+  let qualityLevel = 2, fpsFrames = 0, fpsTime = 0, lastQualityChange = 0, currentFPS = 60;
+  const Q_PR = [0.6, 0.8, 1.0, 1.5];
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+  // صوت المحرك
+  let audioCtx = null, engOsc1, engOsc2, engGain, muted = false;
+
+  const ROAD_OFFSETS = [-160, -80, 0, 80, 160];
+  const dummy = new THREE.Object3D();
+
+  // ====== مراجع DOM مخزّنة (تجنّب getElementById كل إطار) ======
+  const UI = {};
+  let hudAcc = 0;
+  let lastBoostLabel = '';
+  let boostCdVisual = false;
+
+  function cacheUI() {
+    UI.fps = document.getElementById('fpsBox');
+    UI.score = document.getElementById('scoreBoard');
+    UI.speed = document.getElementById('speedBox');
+    UI.timer = document.getElementById('bigTimer');
+    UI.flag = document.getElementById('flagStatus');
+    UI.boostBtn = document.getElementById('boostBtn');
+    UI.boostText = document.getElementById('boostText');
+  }
+
+  // ============ نسيج نوافذ المباني ============
+  function makeBuildingTextures() {
+    const c = document.createElement('canvas'); c.width = c.height = 256;
+    const g = c.getContext('2d');
+    g.fillStyle = '#0b101a'; g.fillRect(0, 0, 256, 256);
+    const e = document.createElement('canvas'); e.width = e.height = 256;
+    const ge = e.getContext('2d');
+    ge.fillStyle = '#000'; ge.fillRect(0, 0, 256, 256);
+    const cols = 8, rows = 14, ww = 256 / cols, wh = 256 / rows;
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+      g.fillStyle = Math.random() < 0.85 ? '#151d2c' : '#0d1420';
+      g.fillRect(x * ww + 3, y * wh + 3, ww - 6, wh - 6);
+      if (Math.random() < 0.42) {
+        const warm = Math.random() < 0.62;
+        ge.fillStyle = warm ? 'rgba(255,190,95,0.95)' : 'rgba(140,200,255,0.9)';
+        ge.fillRect(x * ww + 3, y * wh + 3, ww - 6, wh - 6);
+      }
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(2, 3);
+    const etex = new THREE.CanvasTexture(e);
+    etex.wrapS = etex.wrapT = THREE.RepeatWrapping; etex.repeat.set(2, 3);
+    return { tex, etex };
+  }
+
+  // ============ بناء المدينة الكاملة ============
+  function buildCity() {
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(640, 640),
+      new THREE.MeshStandardMaterial({ color: 0x0b0e15, roughness: 0.95 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // الطرق
+    const roadGeo = new THREE.PlaneGeometry(16, 640);
+    const roadMat = new THREE.MeshStandardMaterial({ color: 0x171c25, roughness: 0.9, metalness: 0.1 });
+    const roadMesh = new THREE.InstancedMesh(roadGeo, roadMat, 10);
+    let ri = 0;
+    for (const off of ROAD_OFFSETS) {
+      dummy.rotation.set(-Math.PI / 2, 0, 0);
+      dummy.position.set(off, 0.03, 0); dummy.scale.set(1, 1, 1);
+      dummy.updateMatrix(); roadMesh.setMatrixAt(ri++, dummy.matrix);
+    }
+    for (const off of ROAD_OFFSETS) {
+      dummy.rotation.set(-Math.PI / 2, 0, Math.PI / 2);
+      dummy.position.set(0, 0.03, off); dummy.scale.set(1, 1, 1);
+      dummy.updateMatrix(); roadMesh.setMatrixAt(ri++, dummy.matrix);
+    }
+    roadMesh.receiveShadow = true;
+    scene.add(roadMesh);
+
+    // علامات الطريق
+    const markGeo = new THREE.PlaneGeometry(0.35, 3.2);
+    const markMat = new THREE.MeshBasicMaterial({ color: 0xcfd8e6 });
+    const dashCount = 10 * 78 + 20 + 50 + 40;
+    const markMesh = new THREE.InstancedMesh(markGeo, markMat, dashCount);
+    let mi = 0;
+    const setMark = (x, z, rotZ, sx, sy) => {
+      dummy.rotation.set(-Math.PI / 2, 0, rotZ);
+      dummy.position.set(x, 0.06, z);
+      dummy.scale.set(sx, sy, 1);
+      dummy.updateMatrix();
+      markMesh.setMatrixAt(mi++, dummy.matrix);
+    };
+    for (const off of ROAD_OFFSETS) {
+      for (let t = -312; t <= 312; t += 8) {
+        setMark(off, t, 0, 1, 1);
+        setMark(t, off, Math.PI / 2, 1, 1);
+      }
+      setMark(off - 7.6, 0, 0, 0.5, 320);
+      setMark(off + 7.6, 0, 0, 0.5, 320);
+      setMark(0, off - 7.6, Math.PI / 2, 0.5, 320);
+      setMark(0, off + 7.6, Math.PI / 2, 0.5, 320);
+    }
+    for (const ox of ROAD_OFFSETS) for (const oz of ROAD_OFFSETS) {
+      for (let s = -6; s <= 6; s += 3) {
+        setMark(ox + s, oz - 10.5, 0, 6, 1.6);
+        setMark(ox - 10.5, oz + s, Math.PI / 2, 6, 1.6);
+      }
+    }
+    markMesh.count = mi;
+    scene.add(markMesh);
+
+    // الأرصفة
+    const swGeo = new THREE.BoxGeometry(3.2, 0.3, 640);
+    const swMat = new THREE.MeshStandardMaterial({ color: 0x2a2f3a, roughness: 0.95 });
+    const swMesh = new THREE.InstancedMesh(swGeo, swMat, 20);
+    let si = 0;
+    for (const off of ROAD_OFFSETS) {
+      dummy.rotation.set(0, 0, 0);
+      dummy.position.set(off - 9.6, 0.15, 0); dummy.scale.set(1, 1, 1); dummy.updateMatrix(); swMesh.setMatrixAt(si++, dummy.matrix);
+      dummy.position.set(off + 9.6, 0.15, 0); dummy.updateMatrix(); swMesh.setMatrixAt(si++, dummy.matrix);
+      dummy.rotation.set(0, Math.PI / 2, 0);
+      dummy.position.set(0, 0.15, off - 9.6); dummy.updateMatrix(); swMesh.setMatrixAt(si++, dummy.matrix);
+      dummy.position.set(0, 0.15, off + 9.6); dummy.updateMatrix(); swMesh.setMatrixAt(si++, dummy.matrix);
+    }
+    swMesh.receiveShadow = true;
+    scene.add(swMesh);
+
+    // ناطحات السحاب
+    const { tex, etex } = makeBuildingTextures();
+    const bGeo = new THREE.BoxGeometry(1, 1, 1);
+    const bMat = new THREE.MeshStandardMaterial({
+      map: tex, emissiveMap: etex, emissive: 0xffffff, emissiveIntensity: 0.5,
+      roughness: 0.55, metalness: 0.45
+    });
+    const MAX_B = 220;
+    const bMesh = new THREE.InstancedMesh(bGeo, bMat, MAX_B);
+    let bi = 0;
+    const blocks = [-200, -120, -40, 40, 120, 200];
+    const tmpColor = new THREE.Color();
+    for (const bx of blocks) for (const bz of blocks) {
+      const n = 2 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < n && bi < MAX_B; i++) {
+        const w = 10 + Math.random() * 14;
+        const d = 10 + Math.random() * 14;
+        const distC = Math.hypot(bx, bz);
+        const h = (16 + Math.random() * 42) * (1 + Math.max(0, (150 - distC) / 150) * 1.3);
+        const px = bx + (Math.random() - 0.5) * (64 - w - 8);
+        const pz = bz + (Math.random() - 0.5) * (64 - d - 8);
+        dummy.rotation.set(0, 0, 0);
+        dummy.position.set(px, h / 2, pz);
+        dummy.scale.set(w, h, d);
+        dummy.updateMatrix();
+        bMesh.setMatrixAt(bi, dummy.matrix);
+        tmpColor.setHSL(0.58 + Math.random() * 0.08, 0.12 + Math.random() * 0.1, 0.55 + Math.random() * 0.3);
+        bMesh.setColorAt(bi, tmpColor);
+        boxColliders.push({ x: px, z: pz, hw: w / 2 + 0.4, hd: d / 2 + 0.4 });
+        bi++;
+      }
+    }
+    bMesh.count = bi;
+    bMesh.castShadow = true;
+    bMesh.receiveShadow = true;
+    scene.add(bMesh);
+
+    // الكباري
+    buildBridge('x', 13, 12);
+    buildBridge('z', 23.5, 12);
+
+    // كشافات الإنارة
+    const lampGeo = new THREE.CylinderGeometry(0.07, 0.1, 7, 6);
+    lampGeo.translate(0, 3.5, 0);
+    const lampMat = new THREE.MeshStandardMaterial({ color: 0x3a4250, roughness: 0.6, metalness: 0.7 });
+    const headGeo = new THREE.BoxGeometry(0.4, 0.14, 1.0);
+    const headMat = new THREE.MeshBasicMaterial({ color: 0xffe9b0 });
+    const LAMP_COUNT = 80;
+    const lampMesh = new THREE.InstancedMesh(lampGeo, lampMat, LAMP_COUNT);
+    const lampHeadMesh = new THREE.InstancedMesh(headGeo, headMat, LAMP_COUNT);
+    let li = 0;
+    for (const off of ROAD_OFFSETS) {
+      for (let t = -280, k = 0; t <= 280; t += 80, k++) {
+        const side = (k % 2 === 0) ? 1 : -1;
+        if (li < LAMP_COUNT) {
+          const lx = off + side * 10.4, lz = t;
+          dummy.rotation.set(0, 0, 0); dummy.position.set(lx, 0, lz); dummy.scale.set(1, 1, 1);
+          dummy.updateMatrix(); lampMesh.setMatrixAt(li, dummy.matrix);
+          dummy.position.set(lx, 7.05, lz); dummy.updateMatrix(); lampHeadMesh.setMatrixAt(li, dummy.matrix);
+          circleColliders.push({ x: lx, z: lz, r: 0.35 });
+          li++;
+        }
+        if (li < LAMP_COUNT) {
+          const lx = t, lz = off + side * 10.4;
+          dummy.rotation.set(0, 0, 0); dummy.position.set(lx, 0, lz); dummy.scale.set(1, 1, 1);
+          dummy.updateMatrix(); lampMesh.setMatrixAt(li, dummy.matrix);
+          dummy.position.set(lx, 7.05, lz); dummy.updateMatrix(); lampHeadMesh.setMatrixAt(li, dummy.matrix);
+          circleColliders.push({ x: lx, z: lz, r: 0.35 });
+          li++;
+        }
+      }
+    }
+    lampMesh.count = li; lampHeadMesh.count = li;
+    lampMesh.castShadow = false;   // توفير: الأعمدة لا تحتاج ظلالاً
+    scene.add(lampMesh, lampHeadMesh);
+
+    const pl1 = new THREE.PointLight(0x88aaff, 0.7, 130, 2); pl1.position.set(0, 30, 0); scene.add(pl1);
+    const pl2 = new THREE.PointLight(0xffbb66, 0.5, 110, 2); pl2.position.set(80, 25, -80); scene.add(pl2);
+
+    // النجوم
+    const starGeo = new THREE.BufferGeometry();
+    const starPos = new Float32Array(400 * 3);
+    for (let i = 0; i < 400; i++) {
+      const r = 480 + Math.random() * 100;
+      const th = Math.random() * Math.PI * 2;
+      starPos[i * 3] = Math.cos(th) * r;
+      starPos[i * 3 + 1] = 90 + Math.random() * 320;
+      starPos[i * 3 + 2] = Math.sin(th) * r;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xaac4ff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0.8 }));
+    scene.add(stars);
+  }
+
+  function buildBridge(axis, y, width) {
+    const len = 500;
+    const deckMat = new THREE.MeshStandardMaterial({ color: 0x141922, roughness: 0.9 });
+    const railMat = new THREE.MeshStandardMaterial({ color: 0x2c3646, roughness: 0.4, metalness: 0.8 });
+
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(axis === 'x' ? len : width, 1.3, axis === 'x' ? width : len), deckMat);
+    deck.position.y = y;
+    deck.castShadow = true; deck.receiveShadow = true;
+    scene.add(deck);
+
+    const railGeo = new THREE.BoxGeometry(axis === 'x' ? len : 0.3, 1.1, axis === 'x' ? 0.3 : len);
+    const r1 = new THREE.Mesh(railGeo, railMat); r1.position.y = y + 1.1;
+    const r2 = new THREE.Mesh(railGeo, railMat); r2.position.y = y + 1.1;
+    if (axis === 'x') { r1.position.z = width / 2 - 0.2; r2.position.z = -width / 2 + 0.2; }
+    else { r1.position.x = width / 2 - 0.2; r2.position.x = -width / 2 + 0.2; }
+    scene.add(r1, r2);
+
+    const line = new THREE.Mesh(
+      new THREE.BoxGeometry(axis === 'x' ? len : 0.3, 0.06, axis === 'x' ? 0.3 : len),
+      new THREE.MeshBasicMaterial({ color: 0xccaa33 })
+    );
+    line.position.y = y + 0.68;
+    scene.add(line);
+
+    const pilGeo = new THREE.CylinderGeometry(1.5, 1.8, y, 10);
+    const pilMat = new THREE.MeshStandardMaterial({ color: 0x39424f, roughness: 0.7 });
+    const count = Math.floor(len / 62);
+    const pilMesh = new THREE.InstancedMesh(pilGeo, pilMat, count);
+    for (let i = 0; i < count; i++) {
+      const t = -len / 2 + 31 + i * 62;
+      dummy.rotation.set(0, 0, 0);
+      dummy.position.set(axis === 'x' ? t : 0, y / 2, axis === 'x' ? 0 : t);
+      dummy.scale.set(1, 1, 1);
+      dummy.updateMatrix();
+      pilMesh.setMatrixAt(i, dummy.matrix);
+      circleColliders.push({ x: axis === 'x' ? t : 0, z: axis === 'x' ? 0 : t, r: 2.1 });
+    }
+    pilMesh.castShadow = true;
+    scene.add(pilMesh);
+  }
+
+  // ============ المرور الحي ============
+  function buildTraffic() {
+    const bodyGeo = new THREE.BoxGeometry(1.9, 0.6, 4.2);
+    const cabinGeo = new THREE.BoxGeometry(1.65, 0.5, 2.0);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3, metalness: 0.8 });
+    const cabinMat = new THREE.MeshStandardMaterial({ color: 0x0a111e, roughness: 0.1, metalness: 0.9 });
+    trafficBodyMesh = new THREE.InstancedMesh(bodyGeo, bodyMat, TRAFFIC_COUNT);
+    trafficCabinMesh = new THREE.InstancedMesh(cabinGeo, cabinMat, TRAFFIC_COUNT);
+    trafficBodyMesh.castShadow = true;
+    const colors = [0x222831, 0x5a1f1f, 0x1f3a5a, 0x3a3a3a, 0x777d8a, 0x274a2c];
+    const tmpC = new THREE.Color();
+    for (let i = 0; i < TRAFFIC_COUNT; i++) {
+      const axis = Math.random() < 0.5 ? 'x' : 'z';
+      const dir = Math.random() < 0.5 ? 1 : -1;
+      const road = ROAD_OFFSETS[Math.floor(Math.random() * ROAD_OFFSETS.length)];
+      traffic.push({
+        axis, dir, road,
+        pos: (Math.random() - 0.5) * 560,
+        speed: 15 + Math.random() * 12
+      });
+      tmpC.setHex(colors[i % colors.length]);
+      trafficBodyMesh.setColorAt(i, tmpC);
+    }
+    scene.add(trafficBodyMesh, trafficCabinMesh);
+  }
+
+  function updateTraffic(dt) {
+    for (let i = 0; i < TRAFFIC_COUNT; i++) {
+      const t = traffic[i];
+      t.pos += t.dir * t.speed * dt;
+      if (t.pos > 300) t.pos = -300;
+      if (t.pos < -300) t.pos = 300;
+      let x, z, yaw;
+      const lane = t.dir * 3.8;
+      if (t.axis === 'x') { x = t.pos; z = t.road + lane; yaw = t.dir > 0 ? Math.PI / 2 : -Math.PI / 2; }
+      else { x = t.road - lane; z = t.pos; yaw = t.dir > 0 ? 0 : Math.PI; }
+
+      dummy.rotation.set(0, yaw, 0);
+      dummy.position.set(x, 0.5, z);
+      dummy.scale.set(1, 1, 1);
+      dummy.updateMatrix();
+      trafficBodyMesh.setMatrixAt(i, dummy.matrix);
+      dummy.position.set(x + Math.sin(yaw) * -0.3, 1.0, z + Math.cos(yaw) * -0.3);
+      dummy.updateMatrix();
+      trafficCabinMesh.setMatrixAt(i, dummy.matrix);
+
+      const dx = myCar.x - x, dz = myCar.z - z;
+      const d2 = dx * dx + dz * dz;
+      if (d2 < 9.6 && d2 > 0.001) {
+        const d = Math.sqrt(d2);
+        myCar.x += (dx / d) * (3.1 - d);
+        myCar.z += (dz / d) * (3.1 - d);
+        myCar.speed *= 0.45;
+      }
+    }
+    trafficBodyMesh.instanceMatrix.needsUpdate = true;
+    trafficCabinMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  // ============ سيارة واقعية ============
+  function createRealCar(colorHex) {
+    const group = new THREE.Group();
+    const paint = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.12, metalness: 0.9 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x0b0c10, roughness: 0.85, metalness: 0.3 });
+    const glass = new THREE.MeshStandardMaterial({ color: 0x0a1420, roughness: 0.03, metalness: 0.95 });
+    const chrome = new THREE.MeshStandardMaterial({ color: 0xb8bcc4, roughness: 0.2, metalness: 1.0 });
+    const tireMat = new THREE.MeshStandardMaterial({ color: 0x0e0e10, roughness: 0.92 });
+    const rimMat = new THREE.MeshStandardMaterial({ color: 0xd0d4da, roughness: 0.25, metalness: 0.95 });
+
+    const add = (geo, mat, x, y, z, rx = 0, ry = 0, rz = 0, shadow = true) => {
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, y, z);
+      m.rotation.set(rx, ry, rz);
+      if (shadow) m.castShadow = true;
+      group.add(m);
+      return m;
+    };
+
+    add(new THREE.BoxGeometry(2.3, 0.3, 4.6), dark, 0, 0.42, 0);
+    add(new THREE.BoxGeometry(2.35, 0.5, 4.65), paint, 0, 0.88, 0);
+    add(new THREE.BoxGeometry(2.28, 0.14, 1.5), paint, 0, 1.18, 1.45, 0.05);
+    add(new THREE.BoxGeometry(2.28, 0.14, 1.1), paint, 0, 1.18, -1.75);
+    add(new THREE.BoxGeometry(2.4, 0.14, 0.5), dark, 0, 0.38, 2.35);
+    add(new THREE.BoxGeometry(2.3, 0.22, 0.4), dark, 0, 0.42, -2.35);
+
+    add(new THREE.BoxGeometry(1.95, 0.5, 2.15), glass, 0, 1.48, -0.2);
+    add(new THREE.BoxGeometry(1.92, 0.06, 1.15), glass, 0, 1.32, 0.98, -0.62);
+    add(new THREE.BoxGeometry(1.92, 0.06, 1.0), glass, 0, 1.32, -1.35, 0.58);
+
+    add(new THREE.BoxGeometry(0.12, 0.3, 0.12), dark, -0.85, 1.42, -2.15);
+    add(new THREE.BoxGeometry(0.12, 0.3, 0.12), dark, 0.85, 1.42, -2.15);
+    add(new THREE.BoxGeometry(2.1, 0.07, 0.55), paint, 0, 1.6, -2.2);
+    add(new THREE.BoxGeometry(0.14, 0.12, 0.28), paint, -1.28, 1.32, 0.55);
+    add(new THREE.BoxGeometry(0.14, 0.12, 0.28), paint, 1.28, 1.32, 0.55);
+    const exGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.3, 10);
+    exGeo.rotateX(Math.PI / 2);
+    add(exGeo, chrome, -0.55, 0.4, -2.4);
+    add(exGeo, chrome, 0.55, 0.4, -2.4);
+
+    const hlMat = new THREE.MeshBasicMaterial({ color: 0xf8fbff });
+    add(new THREE.BoxGeometry(0.6, 0.16, 0.1), hlMat, -0.82, 0.95, 2.35, 0, 0, 0, false);
+    add(new THREE.BoxGeometry(0.6, 0.16, 0.1), hlMat, 0.82, 0.95, 2.35, 0, 0, 0, false);
+    const tlMat = new THREE.MeshBasicMaterial({ color: 0xff1a33 });
+    add(new THREE.BoxGeometry(1.9, 0.13, 0.06), tlMat, 0, 0.98, -2.36, 0, 0, 0, false);
+
+    const coneGeo = new THREE.ConeGeometry(2.0, 10, 12, 1, true);
+    coneGeo.rotateX(-Math.PI / 2);
+    coneGeo.translate(0, 0, 5);
+    const coneMat = new THREE.MeshBasicMaterial({ color: 0xfff3cc, transparent: true, opacity: 0.06, depthWrite: false });
+    add(coneGeo, coneMat, -0.8, 0.95, 2.3, 0, 0, 0, false);
+    add(coneGeo, coneMat, 0.8, 0.95, 2.3, 0, 0, 0, false);
+
+    const spot = new THREE.SpotLight(0xfff2cc, 1.5, 70, 0.42, 0.5, 1.2);
+    spot.position.set(0, 1.1, 2.2);
+    spot.target.position.set(0, 0, 30);
+    group.add(spot, spot.target);
+
+    const tireGeo = new THREE.CylinderGeometry(0.52, 0.52, 0.4, 16);
+    tireGeo.rotateZ(Math.PI / 2);
+    const rimGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.42, 12);
+    rimGeo.rotateZ(Math.PI / 2);
+    const discGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.44, 10);
+    discGeo.rotateZ(Math.PI / 2);
+    const discMat = new THREE.MeshStandardMaterial({ color: 0x8a8f98, roughness: 0.35, metalness: 0.9 });
+
+    const wheels = [];
+    const positions = [
+      [-1.28, 0.52, 1.45, true], [1.28, 0.52, 1.45, true],
+      [-1.28, 0.52, -1.45, false], [1.28, 0.52, -1.45, false]
+    ];
+    for (const [wx, wy, wz, front] of positions) {
+      const wg = new THREE.Group();
+      wg.position.set(wx, wy, wz);
+      const tire = new THREE.Mesh(tireGeo, tireMat); tire.castShadow = true;
+      const rim = new THREE.Mesh(rimGeo, rimMat);
+      const disc = new THREE.Mesh(discGeo, discMat);
+      wg.add(tire, rim, disc);
+      group.add(wg);
+      wheels.push({ group: wg, front });
+    }
+
+    scene.add(group);
+    return { mesh: group, wheels };
+  }
+
+  // ============ تهيئة المشهد ============
+  function init3D() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x05070d);
+    scene.fog = new THREE.FogExp2(0x05070d, 0.0021);
+
+    camera = new THREE.PerspectiveCamera(68, window.innerWidth / window.innerHeight, 0.1, 900);
+
+    renderer = new THREE.WebGLRenderer({
+      antialias: !isMobile && (window.devicePixelRatio || 1) < 2,
+      powerPreference: 'high-performance',
+      stencil: false
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    // PCFSoft أثقل بكثير من PCF — نستخدم PCF للحفاظ على 60 إطار
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    document.body.appendChild(renderer.domElement);
+    applyQuality(isMobile ? 1 : 2);
+
+    scene.add(new THREE.HemisphereLight(0x8fa3cc, 0x141821, 0.6));
+    scene.add(new THREE.AmbientLight(0x33405a, 0.35));
+
+    sun = new THREE.DirectionalLight(0xcfd8ee, 0.85);
+    sun.position.set(80, 140, 60);
+    sun.castShadow = true;
+    // دقة ثابتة (لا تُغيَّر وقت التشغيل → لا إعادة ترجمة شيدر)
+    sun.shadow.mapSize.width = isMobile ? 1024 : 1536;
+    sun.shadow.mapSize.height = isMobile ? 1024 : 1536;
+    sun.shadow.camera.near = 10;
+    sun.shadow.camera.far = 400;
+    sun.shadow.camera.left = -110;
+    sun.shadow.camera.right = 110;
+    sun.shadow.camera.top = 110;
+    sun.shadow.camera.bottom = -110;
+    sun.shadow.bias = -0.0006;
+    scene.add(sun, sun.target);
+
+    buildCity();
+    buildTraffic();
+    initParticlePool();
+
+    // العلم
+    const flagGroup = new THREE.Group();
+    const pole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.09, 0.09, 5.5),
+      new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 0.9, roughness: 0.1 })
+    );
+    pole.position.y = 2.75; pole.castShadow = true;
+    const banner = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.4, 1.5),
+      new THREE.MeshStandardMaterial({ color: 0xff0044, side: THREE.DoubleSide, roughness: 0.3, emissive: 0xaa0022 })
+    );
+    banner.position.set(1.2, 4.5, 0); banner.castShadow = true;
+    flagGroup.add(pole, banner);
+    flagMesh = flagGroup;
+    scene.add(flagMesh);
+
+    const ringGeo = new THREE.RingGeometry(2.5, 3.2, 32);
+    flagRingMesh = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xffcc00, side: THREE.DoubleSide, transparent: true, opacity: 0.8 }));
+    flagRingMesh.rotation.x = -Math.PI / 2;
+    flagRingMesh.position.y = 0.1;
+    scene.add(flagRingMesh);
+
+    window.addEventListener('resize', onResize);
+  }
+
+  // ============ جودة تلقائية (بدون إعادة ترجمة شيدر) ============
+  // ملاحظة: تغيير shadowMap.enabled أو material.needsUpdate وقت التشغيل
+  // يجبر المحرّك على إعادة بناء كل البرامج → تقطيع إطارات ضخم.
+  // لذلك نضبط دقة البكسل فقط (تغيير رخيص جداً).
+  function applyQuality(q) {
+    q = Math.max(0, Math.min(3, q | 0));
+    qualityLevel = q;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, Q_PR[q]));
+  }
+
+  // ============ نظام الجسيمات (مجمّع بدون تخصيص ذاكرة) ============
+  const MAX_PARTICLES = 80;
+  const particlePool = [];
+  let particleCursor = 0;
+
+  function initParticlePool() {
+    const geo = new THREE.SphereGeometry(0.24, 6, 5);   // هندسة مشتركة واحدة
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0xff5500, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending
+      });
+      const m = new THREE.Mesh(geo, mat);
+      m.visible = false;
+      m.frustumCulled = false;
+      scene.add(m);
+      particlePool.push({ mesh: m, life: 0, maxLife: 1 });
+    }
+  }
+
+  function triggerBoostParticles(x, z, angle, count) {
+    count = count || 2;
+    for (let i = 0; i < count; i++) {
+      let p = null;
+      for (let k = 0; k < MAX_PARTICLES; k++) {
+        const cand = particlePool[(particleCursor + k) % MAX_PARTICLES];
+        if (cand.life <= 0) { p = cand; particleCursor = (particleCursor + k + 1) % MAX_PARTICLES; break; }
+      }
+      if (!p) return;
+      p.maxLife = 0.45 + Math.random() * 0.2;
+      p.life = p.maxLife;
+      p.mesh.visible = true;
+      p.mesh.material.color.setHex(Math.random() > 0.5 ? 0xff5500 : 0xffcc00);
+      p.mesh.material.opacity = 1;
+      p.mesh.scale.setScalar(0.7 + Math.random() * 0.7);
+      p.mesh.position.set(
+        x - Math.sin(angle) * 2.5 + (Math.random() - 0.5) * 0.7,
+        0.45 + Math.random() * 0.5,
+        z - Math.cos(angle) * 2.5 + (Math.random() - 0.5) * 0.7
+      );
+    }
+  }
+
+  function updateParticles(dt) {
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      const p = particlePool[i];
+      if (p.life <= 0) continue;
+      p.life -= dt;
+      if (p.life <= 0) {
+        p.mesh.visible = false;
+        p.mesh.material.opacity = 0;
+        continue;
+      }
+      const t = p.life / p.maxLife;
+      p.mesh.material.opacity = t;
+      p.mesh.scale.multiplyScalar(1 - dt * 1.8);
+    }
+  }
+
+  // ============ صوت المحرك ============
+  function initAudio() {
+    if (audioCtx) return;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      engGain = audioCtx.createGain(); engGain.gain.value = 0.0;
+      const filt = audioCtx.createBiquadFilter();
+      filt.type = 'lowpass'; filt.frequency.value = 520;
+      engOsc1 = audioCtx.createOscillator(); engOsc1.type = 'sawtooth';
+      engOsc2 = audioCtx.createOscillator(); engOsc2.type = 'square';
+      const g2 = audioCtx.createGain(); g2.gain.value = 0.4;
+      engOsc1.connect(filt); engOsc2.connect(g2); g2.connect(filt);
+      filt.connect(engGain); engGain.connect(audioCtx.destination);
+      engOsc1.start(); engOsc2.start();
+    } catch (e) { audioCtx = null; }
+  }
+
+  function updateEngineSound() {
+    if (!audioCtx || muted) return;
+    const sr = Math.min(Math.abs(myCar.speed) / 58, 1);
+    const f = 48 + sr * 140 + (boostActive ? 65 : 0);
+    engOsc1.frequency.setTargetAtTime(f, audioCtx.currentTime, 0.05);
+    engOsc2.frequency.setTargetAtTime(f * 0.5, audioCtx.currentTime, 0.05);
+    engGain.gain.setTargetAtTime(gameActive ? 0.035 + sr * 0.05 : 0, audioCtx.currentTime, 0.1);
+  }
+
+  // ============ الشبكة ============
+  window.addEventListener('load', () => {
+    cacheUI();
+    const loginError = document.getElementById('loginError');
+
+    document.getElementById('btnCreateRoom').addEventListener('click', () => {
+      playerName = document.getElementById('nameInput').value.trim() || "Kareem";
+      const code = Math.floor(1000 + Math.random() * 9000).toString();
+      loginError.innerText = "⏳ جاري إنشاء الغرفة أونلاين...";
+      peer = new Peer('flag-3d-pro-' + code);
+      peer.on('open', () => {
+        isHost = true;
+        document.getElementById('roomCodeDisplay').style.display = 'block';
+        document.getElementById('roomCodeDisplay').innerText = `🔑 كود غرفتك: ${code}`;
+        loginError.innerText = "🟢 الغرفة جاهزة! شارك الكود مع صديقك ليتحداك...";
+      });
+      peer.on('connection', (c) => {
+        conn = c;
+        setupPeerConnection();
+        loginError.innerText = "🎉 انضم صديقك! المعركة تبدأ الآن...";
+        setTimeout(() => startGame(true), 1000);
+      });
+      peer.on('error', () => { loginError.innerText = "❌ حدث خطأ، يرجى المحاولة مرة أخرى."; });
+    });
+
+    document.getElementById('btnJoin').addEventListener('click', () => {
+      playerName = document.getElementById('nameInput').value.trim() || "الصديق";
+      const code = document.getElementById('joinCodeInput').value.trim();
+      if (!code || code.length !== 4) { loginError.innerText = "❌ يرجى أدخال كود الغرفة المكون من 4 أرقام!"; return; }
+      loginError.innerText = "⏳ جاري الاتصال بغرفة صديقك...";
+      peer = new Peer();
+      peer.on('open', () => {
+        isHost = false;
+        conn = peer.connect('flag-3d-pro-' + code);
+        conn.on('open', () => {
+          setupPeerConnection();
+          loginError.innerText = "🎉 تم الاتصال بنجاح! جاري تحميل المدينة...";
+          setTimeout(() => startGame(false), 1000);
+        });
+        conn.on('error', () => { loginError.innerText = "❌ الكود غير صحيح أو أن صديقك أغلق الغرفة."; });
+      });
+    });
+
+    const boostBtn = document.getElementById('boostBtn');
+    const triggerBoost = (e) => { if (e) e.preventDefault(); activateBoost(); };
+    boostBtn.addEventListener('click', triggerBoost);
+    boostBtn.addEventListener('touchstart', triggerBoost, { passive: false });
+
+    document.getElementById('againBtn').addEventListener('click', () => location.reload());
+    document.getElementById('soundBtn').addEventListener('click', () => {
+      muted = !muted;
+      document.getElementById('soundBtn').innerText = muted ? '🔇' : '🔊';
+      if (!muted) initAudio();
+    });
+  });
+
+  let lastRemoteBoostEmit = 0;
+
+  function setupPeerConnection() {
+    conn.on('data', (data) => {
+      if (data.type === 'sync' && remoteCar) {
+        remoteCar.tx = data.x; remoteCar.tz = data.z;
+        remoteCar.tangle = data.angle; remoteCar.troll = data.roll || 0; remoteCar.tpitch = data.pitch || 0;
+        remoteCar.score = data.score;
+
+        if (!isHost) {
+          // مؤقّت المضيف هو المرجع
+          if (typeof data.matchTime === 'number') {
+            if (Math.abs(data.matchTime - matchTime) > 0.6) matchTime = data.matchTime;
+          }
+          // تحديث العلم فقط عند تغيّر الحالة فعلاً (تفادي إعادة الربط + تعديل DOM 15 مرة/ث)
+          if (data.flagState !== flagState) {
+            flagState = data.flagState;
+            flagPos = data.flagPos || flagPos;
+            updateFlagMeshPosition();
+          } else if (flagState === 0 && data.flagPos) {
+            flagPos = data.flagPos;
+            flagRingMesh.position.set(flagPos.x, 0.1, flagPos.z);
+            flagMesh.position.set(flagPos.x, 0, flagPos.z);
+          }
+        }
+
+        if (data.isBoosting) {
+          const now = performance.now();
+          if (now - lastRemoteBoostEmit > 55) {
+            lastRemoteBoostEmit = now;
+            triggerBoostParticles(data.x, data.z, data.angle, 1);
+          }
+        }
+      }
+    });
+  }
+
+  function activateBoost() {
+    if (boostCooldown <= 0 && !boostActive) {
+      boostActive = true;
+      boostTimer = 1.8;
+      boostCooldown = 5.0;
+      boostEmitAcc = 0;
+      initAudio();
+      showToast("🚀 BOOST! سرعة فائقة!");
+    }
+  }
+
+  function startGame(hosting) {
+    document.getElementById('menu').style.display = 'none';
+    document.getElementById('hud').style.display = 'block';
+    document.getElementById('bigTimer').style.display = 'block';
+    document.getElementById('boostContainer').style.display = 'block';
+
+    if (!scene) init3D();
+    initAudio();
+
+    const my = createRealCar(hosting ? 0x00ff88 : 0x00ccff);
+    myCar = {
+      mesh: my.mesh, wheels: my.wheels,
+      x: hosting ? -15 : 15, z: 0, angle: hosting ? 0 : Math.PI,
+      speed: 0, pitch: 0, roll: 0, score: 0
+    };
+
+    const rm = createRealCar(hosting ? 0x00ccff : 0x00ff88);
+    remoteCar = {
+      mesh: rm.mesh,
+      x: hosting ? 15 : -15, z: 0, angle: hosting ? Math.PI : 0,
+      tx: hosting ? 15 : -15, tz: 0, tangle: hosting ? Math.PI : 0,
+      troll: 0, tpitch: 0, score: 0
+    };
+
+    flagState = 0;
+    flagPos = { x: 0, z: 0 };
+    flagAttachedTo = 'none';
+    updateFlagMeshPosition();
+
+    // إعادة ضبط المباراة
+    matchTime = MATCH_TIME;
+    UI.timer.className = '';
+    UI.timer.innerText = formatTime(matchTime);
+
+    gameActive = true;
+    lastTime = performance.now();
+    animate();
+  }
+
+  function formatTime(sec) {
+    sec = Math.max(0, sec);
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function updateFlagMeshPosition() {
+    const st = UI.flag;
+    if (flagState === 0) {
+      if (flagAttachedTo !== 'none') { scene.add(flagMesh); flagAttachedTo = 'none'; }
+      flagMesh.position.set(flagPos.x, 0, flagPos.z);
+      flagMesh.rotation.set(0, 0, 0);
+      flagRingMesh.visible = true;
+      flagRingMesh.position.set(flagPos.x, 0.1, flagPos.z);
+      st.className = 'hud-card ground';
+      st.innerHTML = '🚩 العلم: على الأرض!';
+    } else {
+      const iAmHolder = (isHost && flagState === 1) || (!isHost && flagState === 2);
+      const target = iAmHolder ? 'me' : 'remote';
+      if (flagAttachedTo !== target) {
+        (iAmHolder ? myCar.mesh : remoteCar.mesh).add(flagMesh);
+        flagMesh.position.set(0, 1.15, -0.7);
+        flagMesh.rotation.set(0, 0, 0);
+        flagAttachedTo = target;
+      }
+      flagRingMesh.visible = false;
+      if (iAmHolder) {
+        st.className = 'hud-card you';
+        st.innerHTML = '🚩 العلم: معك!';
+      } else {
+        st.className = 'hud-card enemy';
+        st.innerHTML = '🚩 العلم مع صديقك!';
+      }
+    }
+  }
+
+  window.addEventListener('keydown', e => {
+    if (['ArrowUp', 'w', 'W'].includes(e.key)) keys.up = true;
+    if (['ArrowDown', 's', 'S'].includes(e.key)) keys.down = true;
+    if (['ArrowLeft', 'a', 'A'].includes(e.key)) keys.left = true;
+    if (['ArrowRight', 'd', 'D'].includes(e.key)) keys.right = true;
+    if (e.code === 'Space') { keys.space = true; activateBoost(); }
+  });
+  window.addEventListener('keyup', e => {
+    if (['ArrowUp', 'w', 'W'].includes(e.key)) keys.up = false;
+    if (['ArrowDown', 's', 'S'].includes(e.key)) keys.down = false;
+    if (['ArrowLeft', 'a', 'A'].includes(e.key)) keys.left = false;
+    if (['ArrowRight', 'd', 'D'].includes(e.key)) keys.right = false;
+    if (e.code === 'Space') keys.space = false;
+  });
+
+  function setupTouch(id, keyName) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const start = (e) => { e.preventDefault(); keys[keyName] = true; el.classList.add('on'); };
+    const end = (e) => { e.preventDefault(); keys[keyName] = false; el.classList.remove('on'); };
+    el.addEventListener('touchstart', start, { passive: false });
+    el.addEventListener('touchend', end);
+    el.addEventListener('touchcancel', end);
+    el.addEventListener('mousedown', start);
+    el.addEventListener('mouseup', end);
+    el.addEventListener('mouseleave', end);
+  }
+  setupTouch('btnGas', 'up');
+  setupTouch('btnBrake', 'down');
+  setupTouch('btnLeft', 'left');
+  setupTouch('btnRight', 'right');
+
+  function showToast(text) {
+    const t = document.getElementById('toast');
+    t.innerText = text;
+    t.style.display = 'block';
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => t.style.display = 'none', 2000);
+  }
+
+  function onResize() {
+    if (!camera) return;
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  function lerpAngle(a, b, t) {
+    let d = b - a;
+    while (d > Math.PI) d -= Math.PI * 2;
+    while (d < -Math.PI) d += Math.PI * 2;
+    return a + d * t;
+  }
+
+  function resolveCollisions() {
+    const r = 1.75;
+    for (let i = 0; i < boxColliders.length; i++) {
+      const b = boxColliders[i];
+      const dx = myCar.x - b.x, dz = myCar.z - b.z;
+      const px = b.hw + r - Math.abs(dx);
+      const pz = b.hd + r - Math.abs(dz);
+      if (px > 0 && pz > 0) {
+        if (px < pz) myCar.x += Math.sign(dx || 1) * px;
+        else myCar.z += Math.sign(dz || 1) * pz;
+        myCar.speed *= 0.55;
+      }
+    }
+    for (let i = 0; i < circleColliders.length; i++) {
+      const c = circleColliders[i];
+      const dx = myCar.x - c.x, dz = myCar.z - c.z;
+      const d2 = dx * dx + dz * dz;
+      const min = c.r + r;
+      if (d2 < min * min && d2 > 0.0001) {
+        const d = Math.sqrt(d2);
+        myCar.x += (dx / d) * (min - d);
+        myCar.z += (dz / d) * (min - d);
+        myCar.speed *= 0.55;
+      }
+    }
+  }
+
+  // ============ إنهاء المباراة ============
+  function endMatch() {
+    if (!gameActive) return;
+    gameActive = false;
+    if (engGain && audioCtx) engGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+    document.getElementById('hud').style.display = 'none';
+    UI.timer.style.display = 'none';
+    document.getElementById('boostContainer').style.display = 'none';
+
+    const myScore = myCar.score, oppScore = remoteCar.score;
+    const diff = myScore - oppScore;
+    const endScreen = document.getElementById('endScreen');
+    endScreen.style.display = 'flex';
+
+    let title;
+    if (Math.abs(diff) < 0.15) { endScreen.className = 'draw'; title = '🤝 تعادل! مباراة ملحمية'; }
+    else if (diff > 0) { endScreen.className = 'win'; title = '🎉 مبروك، انتصرت في المعركة!'; }
+    else { endScreen.className = 'lose'; title = '💀 خسارة، صديقك هو الفائز!'; }
+
+    document.getElementById('endTitle').innerText = title;
+    document.getElementById('endStats').innerHTML =
+      `<b>مدة المباراة:</b> 5 دقائق<br>` +
+      `<b>مدة حملك للعلم:</b> ${myScore.toFixed(1)} ثانية<br>` +
+      `<b>مدة حمل صديقك:</b> ${oppScore.toFixed(1)} ثانية`;
+  }
+
+  let lastTime = performance.now();
+
+  function animate() {
+    if (!gameActive) return;
+    requestAnimationFrame(animate);
+
+    const now = performance.now();
+    // حد أعلى 1/30 ث لمنع "قفزات" الفيزياء بعد أي تعليق
+    const dt = Math.min((now - lastTime) / 1000, 1 / 30);
+    lastTime = now;
+
+    // ===== مراقب FPS والجودة التلقائية =====
+    fpsFrames++;
+    fpsTime += dt;
+    if (fpsTime >= 1) {
+      currentFPS = Math.round(fpsFrames / fpsTime);
+      UI.fps.innerText = currentFPS + ' FPS';
+      if (currentFPS < 48 && qualityLevel > 0 && now - lastQualityChange > 4000) {
+        applyQuality(qualityLevel - 1); lastQualityChange = now;
+      } else if (currentFPS > 57 && qualityLevel < 3 && now - lastQualityChange > 10000) {
+        applyQuality(qualityLevel + 1); lastQualityChange = now;
+      }
+      fpsFrames = 0; fpsTime = 0;
+    }
+
+    // ===== مؤقّت المباراة (5 دقائق) =====
+    matchTime -= dt;
+    if (matchTime < 0) matchTime = 0;
+
+    if (flagCooldown > 0) flagCooldown -= dt;
+
+    // ===== البوست =====
+    if (boostActive) {
+      boostTimer -= dt;
+      boostEmitAcc += dt;
+      if (boostEmitAcc >= 0.045) { boostEmitAcc = 0; triggerBoostParticles(myCar.x, myCar.z, myCar.angle, 2); }
+      if (boostTimer <= 0) boostActive = false;
+    }
+
+    if (boostCooldown > 0) {
+      boostCooldown -= dt;
+      if (!boostCdVisual) { UI.boostBtn.classList.add('cooldown'); boostCdVisual = true; }
+      const label = `${Math.ceil(boostCooldown)}ث`;
+      if (label !== lastBoostLabel) { UI.boostText.innerText = label; lastBoostLabel = label; }
+    } else if (boostCdVisual) {
+      UI.boostBtn.classList.remove('cooldown');
+      UI.boostText.innerText = "BOOST";
+      boostCdVisual = false;
+      lastBoostLabel = "BOOST";
+    }
+
+    updateParticles(dt);
+    updateTraffic(dt);
+    updateEngineSound();
+
+    // ===== فيزياء القيادة =====
+    const maxSpeedNormal = 58;
+    const maxSpeedBoost = 95;
+    const currentMax = boostActive ? maxSpeedBoost : maxSpeedNormal;
+    const speedRatio = Math.min(Math.abs(myCar.speed) / maxSpeedNormal, 1);
+
+    if (keys.up) myCar.speed += (boostActive ? 95 : 46) * (1 - speedRatio * 0.55) * dt;
+    if (keys.down) myCar.speed -= (myCar.speed > 0 ? 85 : 42) * dt;
+    myCar.speed -= myCar.speed * (keys.up ? 0.25 : 1.4) * dt;
+    if (Math.abs(myCar.speed) < 0.15 && !keys.up && !keys.down) myCar.speed = 0;
+    if (myCar.speed > currentMax) myCar.speed = currentMax;
+    if (myCar.speed < -maxSpeedNormal / 2) myCar.speed = -maxSpeedNormal / 2;
+
+    let steerDir = 0;
+    if (Math.abs(myCar.speed) > 0.4) {
+      const dir = myCar.speed > 0 ? 1 : -1;
+      const turnRate = 2.9 * (1 - speedRatio * 0.55);
+      if (keys.left) { myCar.angle += turnRate * dt * dir; steerDir = 1; }
+      if (keys.right) { myCar.angle -= turnRate * dt * dir; steerDir = -1; }
+    }
+
+    const targetRoll = -steerDir * speedRatio * 0.13;
+    const targetPitch = (keys.up ? -0.045 : 0) + (keys.down ? 0.055 : 0) - (boostActive ? 0.03 : 0);
+    myCar.roll += (targetRoll - myCar.roll) * Math.min(1, dt * 8);
+    myCar.pitch += (targetPitch - myCar.pitch) * Math.min(1, dt * 6);
+
+    myCar.x += Math.sin(myCar.angle) * myCar.speed * dt;
+    myCar.z += Math.cos(myCar.angle) * myCar.speed * dt;
+    myCar.x = Math.max(-300, Math.min(300, myCar.x));
+    myCar.z = Math.max(-300, Math.min(300, myCar.z));
+
+    resolveCollisions();
+
+    myCar.mesh.position.set(myCar.x, 0, myCar.z);
+    myCar.mesh.rotation.y = myCar.angle;
+    myCar.mesh.rotation.z = myCar.roll;
+    myCar.mesh.rotation.x = myCar.pitch;
+
+    const wheelSpin = (myCar.speed * dt) / 0.52;
+    const steerAngle = steerDir * 0.45;
+    for (let i = 0; i < myCar.wheels.length; i++) {
+      const w = myCar.wheels[i];
+      const ch = w.group.children;
+      for (let j = 0; j < ch.length; j++) ch[j].rotation.x += wheelSpin;
+      if (w.front) w.group.rotation.y = steerAngle;
+    }
+
+    // ===== تنعيم سيارة الخصم =====
+    const k = 1 - Math.exp(-12 * dt);
+    remoteCar.mesh.position.x += (remoteCar.tx - remoteCar.mesh.position.x) * k;
+    remoteCar.mesh.position.z += (remoteCar.tz - remoteCar.mesh.position.z) * k;
+    remoteCar.mesh.rotation.y = lerpAngle(remoteCar.mesh.rotation.y, remoteCar.tangle, k);
+    remoteCar.mesh.rotation.z += (remoteCar.troll - remoteCar.mesh.rotation.z) * k;
+    remoteCar.mesh.rotation.x += (remoteCar.tpitch - remoteCar.mesh.rotation.x) * k;
+
+    // ===== إرسال مُخنق 15 مرة/ثانية =====
+    if (conn && conn.open && now - lastSent > 66) {
+      lastSent = now;
+      conn.send({
+        type: 'sync',
+        x: myCar.x, z: myCar.z, angle: myCar.angle,
+        roll: myCar.roll, pitch: myCar.pitch,
+        score: myCar.score,
+        flagState: flagState, flagPos: flagPos,
+        matchTime: matchTime,
+        isBoosting: boostActive
+      });
+    }
+
+    // ===== الكاميرا =====
+    const camDist = 9 + speedRatio * 4 + (boostActive ? 4 : 0);
+    const targetFov = 66 + speedRatio * 8 + (boostActive ? 10 : 0);
+    camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 5);
+    camera.updateProjectionMatrix();
+    const targetCamX = myCar.x - Math.sin(myCar.angle) * camDist;
+    const targetCamZ = myCar.z - Math.cos(myCar.angle) * camDist;
+    camera.position.x += (targetCamX - camera.position.x) * Math.min(1, dt * 7);
+    camera.position.z += (targetCamZ - camera.position.z) * Math.min(1, dt * 7);
+    camera.position.y = 4.8 + speedRatio * 1.6 + (boostActive ? 1.2 : 0);
+    camera.lookAt(myCar.x, 1.4, myCar.z);
+
+    sun.position.set(myCar.x + 80, 140, myCar.z + 60);
+    sun.target.position.set(myCar.x, 0, myCar.z);
+
+    // ===== منطق العلم (Host Authoritative) =====
+    if (isHost) {
+      const myDist = Math.hypot(myCar.x - flagPos.x, myCar.z - flagPos.z);
+      const remoteDist = Math.hypot(remoteCar.mesh.position.x - flagPos.x, remoteCar.mesh.position.z - flagPos.z);
+
+      if (flagState === 0) {
+        if (myDist < 4.5) {
+          flagState = 1;
+          showToast("🚩 التقطت العلم من الأرض!");
+          updateFlagMeshPosition();
+        } else if (remoteDist < 4.5) {
+          flagState = 2;
+          showToast("🚨 صديقك التقط العلم من الأرض!");
+          updateFlagMeshPosition();
+        }
+      } else if (flagCooldown <= 0) {
+        const distCars = Math.hypot(myCar.x - remoteCar.mesh.position.x, myCar.z - remoteCar.mesh.position.z);
+        if (distCars < 4.5) {
+          if (flagState === 1) { flagState = 2; flagCooldown = 2.5; showToast("💥 صديقك صدمك وانتزع منك العلم!"); }
+          else if (flagState === 2) { flagState = 1; flagCooldown = 2.5; showToast("🚨 صدمت صديقك وانتزعت العلم منه!"); }
+          updateFlagMeshPosition();
+        }
+      }
+    }
+
+    // ===== النقاط =====
+    const amIHolder = (isHost && flagState === 1) || (!isHost && flagState === 2);
+    if (flagState !== 0) {
+      if (amIHolder) myCar.score += dt;
+      else remoteCar.score += dt;
+    }
+
+    // ===== تحديث الواجهة (مُخنّق 10Hz) =====
+    hudAcc += dt;
+    if (hudAcc >= 0.1) {
+      hudAcc = 0;
+      UI.score.innerText = `🏆 نقاطك: ${Math.floor(myCar.score)}ث`;
+      UI.speed.innerText = `🏎️ ${Math.round(Math.abs(myCar.speed) * 3.6)} كم/س`;
+    }
+
+    // المؤقّت: تحديث عند تغيّر النص فقط (مرة كل ثانية)
+    const timeStr = formatTime(matchTime);
+    if (UI.timer.innerText !== timeStr) {
+      UI.timer.innerText = timeStr;
+      if (matchTime <= 30) UI.timer.className = 'danger';
+      else if (matchTime <= 60) UI.timer.className = 'warn';
+      else UI.timer.className = '';
+    }
+
+    if (flagRingMesh.visible) flagRingMesh.rotation.z += dt * 1.5;
+
+    // ===== نهاية المباراة =====
+    if (matchTime <= 0) { endMatch(); return; }
+
+    renderer.render(scene, camera);
+  }
+
+  // عند العودة من الخلفية: لا نقفز بالوقت
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) lastTime = performance.now();
+  });
+</script>
+</body>
+</html>
